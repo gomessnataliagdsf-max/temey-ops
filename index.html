@@ -1,103 +1,1347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Temay Ops · People Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{width:100%;height:100%;min-height:100vh}
+body{background:#2b2d31;color:#e2e4e8;font-family:'DM Sans',sans-serif;overflow-x:hidden}
+:root{
+  --bg:#2b2d31;--bg2:#313338;--bg3:#383a40;--bg4:#404249;
+  --border:#3f4147;--green:#00e5a0;--green2:#00b87a;
+  --green-dim:rgba(0,229,160,0.12);--green-dim2:rgba(0,229,160,0.06);
+  --text:#e2e4e8;--text2:#9ea3ad;--text3:#5c6270;
+  --red:#f04747;--yellow:#faa61a;--blue:#5865f2;--purple:#9b84ec;
+  --radius:12px;--radius-sm:7px;--shadow:0 2px 12px rgba(0,0,0,0.3);
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto}
+.nav-section{font-size:9px;color:var(--text3);font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;transition:all .15s}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--green-dim);color:var(--green)}
+.nav-item.locked{opacity:.3;cursor:not-allowed}
+.nav-badge{margin-left:auto;background:var(--green);color:#000;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px}
+.sidebar-user{padding:12px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.user-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:10px;color:#000;flex-shrink:0}
+.user-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.2}
+.user-role{font-size:10px;padding:1px 7px;border-radius:20px;display:inline-block;margin-top:2px;font-weight:500}
+.logout-btn{margin-left:auto;color:var(--text3);cursor:pointer;background:none;border:none;padding:5px;border-radius:6px;transition:color .15s;font-size:16px}
+.logout-btn:hover{color:var(--red)}
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0}
+.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:12px;flex-shrink:0}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;flex:1;color:var(--text)}
+.content{flex:1;overflow-y:auto;padding:22px;background:var(--bg)}
+
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text)}
+.page-subtitle{font-size:12px;color:var(--text2);margin-top:3px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;animation:fadeIn .3s ease;box-shadow:var(--shadow)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,var(--green))}
+.kpi-label{font-size:10px;color:var(--text2);font-weight:600;margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em}
+.kpi-value{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;line-height:1;color:var(--text)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3-1{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;animation:fadeIn .3s ease;box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text)}
+
+.filter-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow)}
+.filter-title{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.filter-input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:12px;padding:8px 11px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s;flex:1;min-width:140px}
+.filter-input:focus{border-color:var(--green)}
+.filter-select{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:12px;padding:8px 11px;outline:none;font-family:'DM Sans',sans-serif;cursor:pointer;flex:1;min-width:140px}
+.filter-select:focus{border-color:var(--green);color:var(--text)}
+.btn-clear{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text3);font-size:11px;padding:7px 11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.btn-clear:hover{border-color:var(--red);color:var(--red)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3)}
+td{padding:11px 12px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--green-dim2)}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.avatar-sm{width:28px;height:28px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--green);flex-shrink:0;border:1px solid var(--border)}
+.flex-center{display:flex;align-items:center;gap:8px}
+
+.btn{padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--green);color:#000}
+.btn-primary:hover{background:var(--green2);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green)}
+.btn-danger{background:rgba(240,71,71,0.12);color:var(--red);border:1px solid rgba(240,71,71,0.3)}
+.btn-danger:hover{background:rgba(240,71,71,0.2)}
+.btn-excel{background:rgba(0,229,160,0.1);color:var(--green);border:1px solid rgba(0,229,160,0.25)}
+.btn-excel:hover{background:rgba(0,229,160,0.18)}
+.btn-sm{padding:5px 9px;font-size:11px}
+.btn-master{background:linear-gradient(135deg,#faa61a,#f04747);color:#fff;border:none}
+.btn-master:hover{opacity:.9;transform:translateY(-1px)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:26px;width:100%;max-width:580px;margin:auto;animation:fadeIn .25s ease;box-shadow:0 8px 40px rgba(0,0,0,0.5)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;border-radius:4px;transition:color .15s}
+.modal-close:hover{color:var(--red)}
+.modal-section{font-size:10px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 11px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.form-group{margin-bottom:12px}
+.form-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block}
+.form-label span{color:var(--red)}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:10px 12px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s}
+.form-input:focus{border-color:var(--green)}
+.form-input.error{border-color:var(--red)}
+.form-error{font-size:11px;color:var(--red);margin-top:4px}
+.form-hint{font-size:10px;color:var(--text3);margin-top:3px}
+.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:10px 12px;outline:none;font-family:'DM Sans',sans-serif;resize:vertical;min-height:76px}
+.form-textarea:focus{border-color:var(--green)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.confirm-box{background:rgba(240,71,71,0.07);border:1px solid rgba(240,71,71,0.2);border-radius:var(--radius-sm);padding:20px;text-align:center}
+.empty-state{text-align:center;padding:44px;color:var(--text3)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.pill-green{background:var(--green-dim);color:var(--green)}
+.vagas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.vaga-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color .2s;box-shadow:var(--shadow)}
+.vaga-card:hover{border-color:var(--green)}
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+.kanban-col{min-width:190px;flex-shrink:0}
+.kanban-header{padding:8px 11px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.kanban-count{font-size:10px;padding:2px 6px;border-radius:20px;background:rgba(0,0,0,0.25);font-weight:700}
+.kanban-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;transition:border-color .2s}
+.kanban-item:hover{border-color:var(--green)}
+.funil-step{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.funil-bar-wrap{flex:1;background:var(--bg3);border-radius:4px;height:24px;overflow:hidden}
+.funil-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 9px;min-width:24px}
+.funil-bar span{font-size:11px;font-weight:700;color:#000}
+.funil-label{font-size:11px;color:var(--text2);width:76px;text-align:right}
+.funil-count{font-size:11px;font-weight:700;color:var(--text);width:20px;text-align:right}
+.agenda-section{margin-bottom:20px}
+.agenda-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.entrevista-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:9px;display:flex;align-items:center;gap:14px;transition:border-color .2s;box-shadow:var(--shadow)}
+.entrevista-card:hover{border-color:var(--green)}
+
+.login-temay{min-height:100vh;background:linear-gradient(135deg,#1a1c1f 0%,#2b2d31 50%,#1e2124 100%);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+.login-temay-bg{position:absolute;inset:0;pointer-events:none}
+.login-temay-bg::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,160,0.08) 0%,transparent 70%);top:-200px;right:-200px}
+.login-temay-bg::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(88,101,242,0.06) 0%,transparent 70%);bottom:-100px;left:-100px}
+.login-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
+.login-box{position:relative;z-index:1;background:rgba(49,51,56,0.95);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:fadeIn .4s ease;backdrop-filter:blur(10px)}
+.login-logo-wrap{text-align:center;margin-bottom:28px}
+.login-system-name{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);margin-top:10px}
+.login-system-sub{font-size:11px;color:var(--green);font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.login-divider{height:1px;background:var(--border);margin:20px 0}
+.login-field{margin-bottom:14px}
+.login-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;display:block}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;font-size:14px}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:11px 11px 11px 37px;outline:none;font-family:'DM Sans',sans-serif;transition:border-color .2s}
+.login-input:focus{border-color:var(--green)}
+.login-input.err{border-color:var(--red)}
+.login-btn{width:100%;background:var(--green);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;padding:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;margin-top:6px}
+.login-btn:hover:not(:disabled){background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,229,160,0.25)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-btn-master{background:linear-gradient(135deg,#faa61a,#f04747);color:#fff}
+.login-btn-master:hover:not(:disabled){opacity:.9;box-shadow:0 4px 18px rgba(240,71,71,0.3);transform:translateY(-1px)}
+.login-err{background:rgba(240,71,71,0.1);border:1px solid rgba(240,71,71,0.3);border-radius:var(--radius-sm);padding:10px 13px;font-size:13px;color:var(--red);margin-bottom:13px}
+.login-switch{text-align:center;margin-top:16px;font-size:12px;color:var(--text3)}
+.login-switch a{color:var(--green);cursor:pointer;text-decoration:none;font-weight:600}
+.login-switch a:hover{text-decoration:underline}
+.forgot-link{text-align:right;margin-top:4px;font-size:11px;color:var(--text3);cursor:pointer;transition:color .15s}
+.forgot-link:hover{color:var(--green)}
+
+.master-badge{background:linear-gradient(135deg,#faa61a,#f04747);color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.05em}
+.empresa-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all .2s;box-shadow:var(--shadow);cursor:pointer}
+.empresa-card:hover{border-color:var(--green);transform:translateY(-2px)}
+.empresa-card.selected{border-color:var(--green);background:var(--green-dim)}
+.empresa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+.stat-row{display:flex;gap:12px;margin-top:10px}
+.stat-item{background:var(--bg3);border-radius:var(--radius-sm);padding:6px 10px;text-align:center;flex:1}
+.stat-num{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--green)}
+.stat-label{font-size:9px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+
+.user-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color .2s;box-shadow:var(--shadow)}
+.user-card:hover{border-color:var(--green)}
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--bg4)}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid-3-1{grid-template-columns:1fr}}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}.sidebar{width:200px}}
+@media(max-width:600px){.sidebar{display:none}.kpi-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+
+const SB_URL = "https://okcdkzbvxbmstfsebqfv.supabase.co";
+const SB_KEY = "sb_publishable_8esAMyTgS_5wGPuWBBVibw_2-AzP7vW";
+const MASTER_LOGIN = "TEMAY";
+const MASTER_SENHA = "0227";
+const MASTER_EMAIL = "gomessnatalia@outlook.com";
+
 const db = {
-  get: async (table, filtros = "") => {
-    try {
-      const r = await fetch(`${SB_URL}/rest/v1/${table}?select=*${filtros}&order=created_at.desc`, {
-        headers: {
-          apikey: SB_KEY,
-          Authorization: `Bearer ${SB_KEY}`
-        }
-      });
-
-      if (!r.ok) {
-        const error = await r.text();
-        console.error("GET ERROR:", error);
-        throw new Error(error);
-      }
-
-      return await r.json();
-    } catch (err) {
-      console.error("GET FAIL:", err);
-      return [];
-    }
+  get: async (table, filtros="") => {
+    const realTable = table === "candidatos" ? "candidatos" : table;
+    const r = await fetch(`${SB_URL}/rest/v1/${realTable}?select=*${filtros}&order=created_at.desc`, {
+      headers:{"apikey":SB_KEY,"Authorization":`Bearer ${SB_KEY}`}
+    }); return r.json();
   },
-
   post: async (table, data) => {
-    try {
-      console.log("ENVIANDO:", data);
-
-      const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
-        method: "POST",
-        headers: {
-          apikey: SB_KEY,
-          Authorization: `Bearer ${SB_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation"
-        },
-        body: JSON.stringify(data)
-      });
-
-      const res = await r.json();
-
-      if (!r.ok) {
-        console.error("POST ERROR:", res);
-        throw new Error(res.message || "Erro ao salvar");
-      }
-
-      console.log("SALVO:", res);
-      return res;
-
-    } catch (err) {
-      console.error("POST FAIL:", err);
-      alert("Erro ao salvar dados. Veja o console.");
-      return null;
-    }
+    const realTable = table === "candidatos" ? "candidatos" : table;
+    const r = await fetch(`${SB_URL}/rest/v1/${realTable}`, {
+      method:"POST",
+      headers:{"apikey":SB_KEY,"Authorization":`Bearer ${SB_KEY}`,"Content-Type":"application/json","Prefer":"return=representation"},
+      body:JSON.stringify(data)
+    }); return r.json();
   },
-
   patch: async (table, id, data) => {
-    try {
-      const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
-        method: "PATCH",
-        headers: {
-          apikey: SB_KEY,
-          Authorization: `Bearer ${SB_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation"
-        },
-        body: JSON.stringify(data)
-      });
-
-      const res = await r.json();
-
-      if (!r.ok) {
-        console.error("PATCH ERROR:", res);
-        throw new Error(res.message);
-      }
-
-      return res;
-
-    } catch (err) {
-      console.error("PATCH FAIL:", err);
-      return null;
-    }
+    const realTable = table === "candidatos" ? "candidatos" : table;
+    const r = await fetch(`${SB_URL}/rest/v1/${realTable}?id=eq.${id}`, {
+      method:"PATCH",
+      headers:{"apikey":SB_KEY,"Authorization":`Bearer ${SB_KEY}`,"Content-Type":"application/json","Prefer":"return=representation"},
+      body:JSON.stringify(data)
+    }); return r.json();
   },
-
   delete: async (table, id) => {
-    try {
-      const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {
-        method: "DELETE",
-        headers: {
-          apikey: SB_KEY,
-          Authorization: `Bearer ${SB_KEY}`
-        }
-      });
-
-      if (!r.ok) {
-        const error = await r.text();
-        console.error("DELETE ERROR:", error);
-      }
-
-    } catch (err) {
-      console.error("DELETE FAIL:", err);
-    }
+    const realTable = table === "candidatos" ? "candidatos" : table;
+    await fetch(`${SB_URL}/rest/v1/${realTable}?id=eq.${id}`, {
+      method:"DELETE",
+      headers:{"apikey":SB_KEY,"Authorization":`Bearer ${SB_KEY}`}
+    });
   }
 };
+
+const PERFIS = {
+  master:      {cor:"#faa61a",label:"Master",icon:"👑"},
+  coordenador: {cor:"#5865f2",label:"Coordenador RH",icon:"🎯"},
+  assistente:  {cor:"#00e5a0",label:"Assistente RH",icon:"👤"},
+  auxiliar:    {cor:"#9b84ec",label:"Auxiliar RH",icon:"🔹"},
+};
+const STATUS_OPTS = ["Novo","Em Entrevista","Aprovado","Reprovado","Contratado","Desistente"];
+const ORIGEM_OPTS = ["Tráfego Pago (Meta/Google)","Indicação","Orgânico (Gupy/LinkedIn)","Outros"];
+const TIPO_ENT_OPTS = ["Online (Google Meet)","Presencial","Telefone","WhatsApp"];
+const HORARIOS = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
+const SC = s => ({"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#00e5a0","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec","Aberta":"#00e5a0","Pausada":"#faa61a","Encerrada":"#f04747"}[s]||"#9ea3ad");
+const ini = (n="") => n.split(" ").slice(0,2).map(x=>x[0]).join("").toUpperCase();
+const limTel = t => t ? t.replace(/\D/g,"") : "";
+
+function I({d,s=15,c="currentColor"}){
+  return <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
+}
+const IC={
+  dash:"M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10",
+  cand:"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8",
+  vaga:"M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
+  cal:"M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+  users:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 11a4 4 0 100-8 4 4 0 000 8",
+  funnel:"M4 4h16v2.172a2 2 0 01-.586 1.414L13 14v7l-2-1v-6L4.586 7.586A2 2 0 014 6.172V4z",
+  logout:"M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4 M16 17l5-5-5-5 M21 12H9",
+  edit:"M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7 M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
+  trash:"M3 6h18 M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2",
+  plus:"M12 5v14M5 12h14",
+  download:"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M7 10l5 5 5-5 M12 15V3",
+  search:"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0",
+  lock:"M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z M7 11V7a5 5 0 0110 0v4",
+  bell:"M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 01-3.46 0",
+  building:"M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10",
+  key:"M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4",
+  phone:"M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.64A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z",
+  filter:"M22 3H2l8 9.46V19l4 2V12.46z",
+  eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 100 6 3 3 0 000-6z",
+};
+
+function LogoTemay({size=60}){
+  return(
+    <img
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' rx='12' fill='%231a1c1f'/%3E%3Ccircle cx='30' cy='40' r='18' fill='none' stroke='%2300e5a0' stroke-width='3'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300e5a0'/%3E%3Cline x1='44' y1='30' x2='60' y2='22' stroke='%2300e5a0' stroke-width='2'/%3E%3Cline x1='44' y1='40' x2='70' y2='40' stroke='%2300e5a0' stroke-width='2'/%3E%3Cline x1='44' y1='50' x2='65' y2='58' stroke='%2300e5a0' stroke-width='2'/%3E%3Crect x='58' y='16' width='8' height='12' rx='2' fill='%235865f2'/%3E%3Crect x='68' y='20' width='8' height='8' rx='2' fill='%23faa61a'/%3E%3Crect x='63' y='53' width='8' height='10' rx='2' fill='%239b84ec'/%3E%3Ctext x='82' y='36' font-family='Arial' font-weight='800' font-size='12' fill='%23e2e4e8'%3ETemay%3C/text%3E%3Ctext x='82' y='50' font-family='Arial' font-weight='800' font-size='12' fill='%2300e5a0'%3EOps%3C/text%3E%3C/svg%3E"
+      width={size}
+      height={size * 0.67}
+      alt="Temay Ops"
+      style={{objectFit:"contain"}}
+    />
+  );
+}
+
+function LogoGD({size=32}){
+  return(
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <rect width="40" height="40" rx="10" fill="#00e5a0"/>
+      <path d="M8 20c0-4.4 3.6-8 8-8h2v3h-2c-2.8 0-5 2.2-5 5s2.2 5 5 5h2v-3h-1v-2h4v7h-5c-4.4 0-8-3.6-8-8z" fill="#000"/>
+      <path d="M32 20c0 4.4-3.6 8-8 8h-2v-3h2c2.8 0 5-2.2 5-5s-2.2-5-5-5h-2v3h1v2h-4v-7h5c4.4 0 8 3.6 8 8z" fill="#000"/>
+    </svg>
+  );
+}
+
+function LoginPage({onLogin}){
+  const [modo,setModo]=React.useState("empresa");
+  const [empresa,setEmpresa]=React.useState("");
+  const [login,setLogin]=React.useState("");
+  const [senha,setSenha]=React.useState("");
+  const [showSenha,setShowSenha]=React.useState(false);
+  const [erro,setErro]=React.useState("");
+  const [loading,setLoading]=React.useState(false);
+  const [esqueceu,setEsqueceu]=React.useState(false);
+  const [emailRec,setEmailRec]=React.useState("");
+  const [msgRec,setMsgRec]=React.useState("");
+  const [empresas,setEmpresas]=React.useState([]);
+
+  React.useEffect(()=>{
+    db.get("empresas","&ativa=eq.true").then(r=>{if(Array.isArray(r))setEmpresas(r);});
+  },[]);
+
+  const handleLogin=async()=>{
+    setErro("");setLoading(true);
+    try{
+      if(modo==="master"){
+        if(login===MASTER_LOGIN&&senha===MASTER_SENHA){
+          onLogin({id:"master",nome:"Natalia (Master)",perfil:"master",empresa_id:null,empresa_nome:"Temay Ops"},null);
+        }else{setErro("Credenciais Master inválidas.");}
+        setLoading(false);return;
+      }
+      const emp=empresas.find(e=>e.codigo===empresa.toUpperCase()||e.nome.toUpperCase()===empresa.toUpperCase());
+      if(!emp){setErro("Empresa não encontrada. Verifique o código.");setLoading(false);return;}
+      const usuarios=await db.get("sistema_usuarios",`&empresa_id=eq.${emp.id}&login=eq.${login}`);
+      if(!Array.isArray(usuarios)||usuarios.length===0){setErro("Usuário não encontrado.");setLoading(false);return;}
+      const u=usuarios[0];
+      if(!u.ativo&&u.ativo!==true&&u.ativo!=="VERDADE"&&u.ativo!=="true"){setErro("Usuário inativo.");setLoading(false);return;}
+      if(u.senha_hash!==senha){setErro("Senha incorreta.");setLoading(false);return;}
+      onLogin({...u,empresa_id:emp.id,empresa_nome:emp.nome,empresa_codigo:emp.codigo},null);
+    }catch(e){setErro("Erro de conexão. Tente novamente.");}
+    setLoading(false);
+  };
+
+  if(esqueceu) return(
+    <div className="login-temay">
+      <div className="login-temay-bg"/><div className="login-grid-bg"/>
+      <div className="login-box">
+        <div className="login-logo-wrap"><LogoTemay size={80}/><div className="login-system-name">Esqueceu a senha?</div></div>
+        <div style={{textAlign:"center",padding:"10px 0 20px"}}>
+          <div style={{fontSize:44,marginBottom:16}}>🔑</div>
+          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:15,color:"var(--text)",marginBottom:10}}>Entre em contato com o administrador</div>
+          <div style={{fontSize:13,color:"var(--text2)",lineHeight:1.6,marginBottom:20}}>
+            A redefinição de senha é feita pelo administrador do sistema.<br/>
+            Solicite a troca diretamente com ele.
+          </div>
+          <div style={{background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",padding:"14px 16px",fontSize:12,color:"var(--text2)",textAlign:"left",marginBottom:20}}>
+            <div style={{fontWeight:700,color:"var(--text)",marginBottom:6}}>📋 Como proceder:</div>
+            <div style={{marginBottom:4}}>1. Informe seu <strong style={{color:"var(--text)"}}>nome</strong> e <strong style={{color:"var(--text)"}}>login</strong> ao administrador</div>
+            <div style={{marginBottom:4}}>2. O administrador irá redefinir sua senha</div>
+            <div>3. Acesse com a nova senha e troque se desejar</div>
+          </div>
+        </div>
+        <button className="login-btn" onClick={()=>setEsqueceu(false)}>← Voltar ao login</button>
+      </div>
+    </div>
+  );
+
+  return(
+    <div className="login-temay">
+      <div className="login-temay-bg"/><div className="login-grid-bg"/>
+      <div className="login-box">
+        <div className="login-logo-wrap">
+          <LogoTemay size={90}/>
+          <div className="login-system-name">Temay Ops</div>
+          <div className="login-system-sub">People Analytics · RH</div>
+        </div>
+
+        <div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg3)",borderRadius:"var(--radius-sm)",padding:4}}>
+          <button onClick={()=>{setModo("empresa");setErro("");}} style={{flex:1,padding:"8px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:12,transition:"all .15s",background:modo==="empresa"?"var(--bg2)":"transparent",color:modo==="empresa"?"var(--text)":"var(--text3)",boxShadow:modo==="empresa"?"var(--shadow)":"none"}}>
+            🏢 Empresa
+          </button>
+          <button onClick={()=>{setModo("master");setErro("");}} style={{flex:1,padding:"8px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:12,transition:"all .15s",background:modo==="master"?"var(--bg2)":"transparent",color:modo==="master"?"#faa61a":"var(--text3)",boxShadow:modo==="master"?"var(--shadow)":"none"}}>
+            👑 Master
+          </button>
+        </div>
+
+        {erro&&<div className="login-err">{erro}</div>}
+
+        {modo==="empresa"&&(
+          <>
+            <div className="login-field">
+              <label className="login-label">Empresa</label>
+              <div className="input-wrap">
+                <span className="input-icon">🏢</span>
+                <input className={`login-input${erro?" err":""}`} placeholder="Nome ou código da empresa" value={empresa} onChange={e=>{setEmpresa(e.target.value);setErro("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+              </div>
+              <div style={{fontSize:10,color:"var(--text3)",marginTop:3}}>Ex: GRUPODIGITAL ou Grupo Digital</div>
+            </div>
+            <div className="login-field">
+              <label className="login-label">Usuário</label>
+              <div className="input-wrap">
+                <span className="input-icon">👤</span>
+                <input className={`login-input${erro?" err":""}`} placeholder="Seu login" value={login} onChange={e=>{setLogin(e.target.value);setErro("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+              </div>
+            </div>
+          </>
+        )}
+
+        {modo==="master"&&(
+          <div className="login-field">
+            <label className="login-label">Login Master</label>
+            <div className="input-wrap">
+              <span className="input-icon">👑</span>
+              <input className={`login-input${erro?" err":""}`} placeholder="Login master" value={login} onChange={e=>{setLogin(e.target.value);setErro("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+            </div>
+          </div>
+        )}
+
+        <div className="login-field">
+          <label className="login-label">Senha</label>
+          <div className="input-wrap">
+            <span className="input-icon">🔒</span>
+            <input className={`login-input${erro?" err":""}`} type={showSenha?"text":"password"} placeholder="••••••••" value={senha} onChange={e=>{setSenha(e.target.value);setErro("");}} onKeyDown={e=>e.key==="Enter"&&handleLogin()} style={{paddingRight:38}}/>
+            <button style={{position:"absolute",right:11,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"var(--text3)",cursor:"pointer",fontSize:13}} onClick={()=>setShowSenha(s=>!s)}>{showSenha?"🙈":"👁"}</button>
+          </div>
+          <div className="forgot-link" onClick={()=>setEsqueceu(true)}>Esqueceu a senha?</div>
+        </div>
+
+        <button className={`login-btn${modo==="master"?" login-btn-master":""}`} onClick={handleLogin} disabled={loading||!login||!senha||(modo==="empresa"&&!empresa)}>
+          {loading?"Entrando...":(modo==="master"?"👑 Entrar como Master":"Entrar")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MasterDashboard({onEntrarEmpresa,onLogout}){
+  const [page,setPage]=React.useState("empresas");
+  const [empresas,setEmpresas]=React.useState([]);
+  const [todos,setTodos]=React.useState({candidatos:[],vagas:[],usuarios:[]});
+  const [loading,setLoading]=React.useState(true);
+  const [modalEmpresa,setModalEmpresa]=React.useState(false);
+  const [formEmp,setFormEmp]=React.useState({nome:"",codigo:""});
+  const [senhaAtual,setSenhaAtual]=React.useState("");
+  const [senhaNova,setSenhaNova]=React.useState("");
+  const [msgSenha,setMsgSenha]=React.useState("");
+
+  React.useEffect(()=>{
+    const load=async()=>{
+      const [emps,cands,vgs,usrs]=await Promise.all([
+        db.get("empresas"),db.get("candidatos"),db.get("vagas"),db.get("sistema_usuarios")
+      ]);
+      if(Array.isArray(emps))setEmpresas(emps);
+      setTodos({candidatos:Array.isArray(cands)?cands:[],vagas:Array.isArray(vgs)?vgs:[],usuarios:Array.isArray(usrs)?usrs:[]});
+      setLoading(false);
+    };load();
+  },[]);
+
+  const criarEmpresa=async()=>{
+    if(!formEmp.nome||!formEmp.codigo)return;
+    const r=await db.post("empresas",{...formEmp,codigo:formEmp.codigo.toUpperCase(),ativa:true});
+    if(Array.isArray(r)&&r[0])setEmpresas(e=>[r[0],...e]);
+    setModalEmpresa(false);setFormEmp({nome:"",codigo:""});
+  };
+
+  const trocarSenha=()=>{
+    if(senhaAtual!==MASTER_SENHA){setMsgSenha("Senha atual incorreta.");return;}
+    if(senhaNova.length<4){setMsgSenha("Nova senha deve ter ao menos 4 caracteres.");return;}
+    setMsgSenha("✅ Senha alterada! (Atenção: altere também no código do sistema)");
+    setTimeout(()=>{setMsgSenha("");setSenhaAtual("");setSenhaNova("");},2500);
+  };
+
+  const nav=[
+    {id:"empresas",label:"Empresas",icon:IC.building},
+    {id:"visaogeral",label:"Visão Geral",icon:IC.dash},
+    {id:"todos_candidatos",label:"Todos candidatos",icon:IC.cand},
+    {id:"config",label:"Configurações",icon:IC.key},
+  ];
+
+  return(
+    <div className="app">
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <LogoTemay size={44}/>
+          </div>
+          <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid var(--border)",fontSize:10,color:"var(--text3)"}}>Painel Master</div>
+        </div>
+        <nav className="sidebar-nav">
+          <div className="nav-section">Master</div>
+          {nav.map(item=>(
+            <button key={item.id} className={`nav-item${page===item.id?" active":""}`} onClick={()=>setPage(item.id)}>
+              <I d={item.icon} s={14}/>{item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-user">
+          <div className="user-avatar" style={{background:"#faa61a"}}>👑</div>
+          <div>
+            <div className="user-name">Natalia</div>
+            <span className="user-role" style={{background:"rgba(250,166,26,0.2)",color:"#faa61a"}}>Master</span>
+          </div>
+          <button className="logout-btn" onClick={onLogout} title="Sair">⎋</button>
+        </div>
+      </aside>
+
+      <div className="main">
+        <header className="topbar">
+          <div className="topbar-title">{page==="empresas"?"Empresas Cadastradas":page==="visaogeral"?"Visão Geral":page==="todos_candidatos"?"Todos os candidatos":"Configurações"}</div>
+          <span className="master-badge">👑 MASTER</span>
+        </header>
+
+        <main className="content">
+          {loading?<div style={{textAlign:"center",padding:60,color:"var(--text2)"}}>Carregando...</div>:(
+            <>
+              {page==="empresas"&&(
+                <>
+                  <div className="page-header">
+                    <div><div className="page-title">Empresas</div><div className="page-subtitle">{empresas.length} empresa{empresas.length!==1?"s":""} cadastrada{empresas.length!==1?"s":""}</div></div>
+                    <button className="btn btn-master" onClick={()=>setModalEmpresa(true)}><I d={IC.plus} s={13}/>Nova Empresa</button>
+                  </div>
+                  <div className="empresa-grid">
+                    {empresas.map(e=>{
+                      const cands=todos.candidatos.filter(c=>c.empresa_id===e.id);
+                      const vgs=todos.vagas.filter(v=>v.empresa_id===e.id);
+                      const usrs=todos.usuarios.filter(u=>u.empresa_id===e.id);
+                      return(
+                        <div className="empresa-card" key={e.id}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                            <div>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><LogoGD size={26}/></div>
+                              <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14}}>{e.nome}</div>
+                              <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>Código: <strong style={{color:"var(--green)"}}>{e.codigo}</strong></div>
+                            </div>
+                            <span className="badge" style={{background:e.ativa?"rgba(0,229,160,0.15)":"rgba(240,71,71,0.15)",color:e.ativa?"var(--green)":"var(--red)"}}>{e.ativa?"Ativa":"Inativa"}</span>
+                          </div>
+                          <div className="stat-row">
+                            <div className="stat-item"><div className="stat-num">{cands.length}</div><div className="stat-label">candidatos</div></div>
+                            <div className="stat-item"><div className="stat-num">{vgs.filter(v=>v.status==="Aberta").length}</div><div className="stat-label">Vagas</div></div>
+                            <div className="stat-item"><div className="stat-num">{usrs.length}</div><div className="stat-label">Usuários</div></div>
+                          </div>
+                          <button className="btn btn-primary btn-sm" style={{width:"100%",justifyContent:"center",marginTop:12}} onClick={()=>onEntrarEmpresa(e)}>
+                            Entrar como Admin →
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {page==="visaogeral"&&(
+                <>
+                  <div className="page-title" style={{marginBottom:16}}>Visão Geral do Sistema</div>
+                  <div className="kpi-grid">
+                    {[
+                      {label:"Total Empresas",value:empresas.length,accent:"var(--yellow)"},
+                      {label:"Total candidatos",value:todos.candidatos.length,accent:"var(--green)"},
+                      {label:"Total Vagas",value:todos.vagas.filter(v=>v.status==="Aberta").length,accent:"var(--blue)"},
+                      {label:"Total Usuários",value:todos.usuarios.length,accent:"var(--purple)"},
+                    ].map(k=>(
+                      <div className="kpi-card" key={k.label} style={{"--accent":k.accent}}>
+                        <div className="kpi-label">{k.label}</div>
+                        <div className="kpi-value">{k.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="card">
+                    <div className="card-header"><span className="card-title">Resumo por Empresa</span></div>
+                    <div className="table-wrap">
+                      <table>
+                        <thead><tr><th>Empresa</th><th>Código</th><th>candidatos</th><th>Vagas Abertas</th><th>Usuários</th><th>Status</th></tr></thead>
+                        <tbody>{empresas.map(e=>(
+                          <tr key={e.id}>
+                            <td style={{fontWeight:600}}>{e.nome}</td>
+                            <td><span style={{background:"var(--green-dim)",color:"var(--green)",padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700}}>{e.codigo}</span></td>
+                            <td>{todos.candidatos.filter(c=>c.empresa_id===e.id).length}</td>
+                            <td>{todos.vagas.filter(v=>v.empresa_id===e.id&&v.status==="Aberta").length}</td>
+                            <td>{todos.usuarios.filter(u=>u.empresa_id===e.id).length}</td>
+                            <td><span className="badge" style={{background:e.ativa?"rgba(0,229,160,0.15)":"rgba(240,71,71,0.15)",color:e.ativa?"var(--green)":"var(--red)"}}>{e.ativa?"Ativa":"Inativa"}</span></td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {page==="todos_candidatos"&&(
+                <>
+                  <div className="page-title" style={{marginBottom:16}}>Todos os candidatos</div>
+                  <div className="card">
+                    <div className="table-wrap">
+                      <table>
+                        <thead><tr><th>candidato</th><th>Empresa</th><th>Vaga</th><th>Recrutador</th><th>Status</th><th>Data</th></tr></thead>
+                        <tbody>{todos.candidatos.map(c=>{
+                          const emp=empresas.find(e=>e.id===c.empresa_id);
+                          return(
+                            <tr key={c.id}>
+                              <td><div className="flex-center"><div className="avatar-sm">{ini(c.nome)}</div><div><div style={{fontWeight:600,fontSize:12}}>{c.nome}</div><div style={{fontSize:10,color:"var(--text3)"}}>{c.email||""}</div></div></div></td>
+                              <td style={{fontSize:11,color:"var(--text2)"}}>{emp?.nome||"-"}</td>
+                              <td style={{fontSize:11}}>{c.vaga||"-"}</td>
+                              <td style={{fontSize:11,color:"var(--text2)"}}>{c.recrutador||"-"}</td>
+                              <td><span className="badge" style={{background:`${SC(c.status)}20`,color:SC(c.status)}}>{c.status||"Novo"}</span></td>
+                              <td style={{fontSize:11,color:"var(--text3)"}}>{c.data||"-"}</td>
+                            </tr>
+                          );
+                        })}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {page==="config"&&(
+                <>
+                  <div className="page-title" style={{marginBottom:16}}>Configurações Master</div>
+                  <div className="card" style={{maxWidth:400}}>
+                    <div className="card-title" style={{marginBottom:16}}>🔑 Alterar Senha Master</div>
+                    <div className="form-group"><label className="form-label">Senha atual</label><input className="form-input" type="password" value={senhaAtual} onChange={e=>setSenhaAtual(e.target.value)} placeholder="••••••••"/></div>
+                    <div className="form-group"><label className="form-label">Nova senha</label><input className="form-input" type="password" value={senhaNova} onChange={e=>setSenhaNova(e.target.value)} placeholder="••••••••"/></div>
+                    {msgSenha&&<div style={{fontSize:12,color:msgSenha.includes("✅")?"var(--green)":"var(--red)",marginBottom:10}}>{msgSenha}</div>}
+                    <button className="btn btn-primary" onClick={trocarSenha}>Alterar Senha</button>
+                    <div style={{marginTop:16,padding:12,background:"var(--bg3)",borderRadius:"var(--radius-sm)",fontSize:11,color:"var(--text3)"}}>
+                      📧 E-mail de recuperação: <strong style={{color:"var(--text)"}}>{MASTER_EMAIL}</strong>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+
+      {modalEmpresa&&(
+        <div className="modal-overlay" onClick={()=>setModalEmpresa(false)}>
+          <div className="modal" style={{maxWidth:440}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header"><span className="modal-title">🏢 Nova Empresa</span><button className="modal-close" onClick={()=>setModalEmpresa(false)}>×</button></div>
+            <div className="form-group"><label className="form-label">Nome da Empresa <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={formEmp.nome} onChange={e=>setFormEmp(f=>({...f,nome:e.target.value}))} placeholder="Ex: Grupo Digital - Filial Sul"/></div>
+            <div className="form-group"><label className="form-label">Código de Acesso <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={formEmp.codigo} onChange={e=>setFormEmp(f=>({...f,codigo:e.target.value.toUpperCase()}))} placeholder="Ex: GRUPODIGITAL-SUL"/><div className="form-hint">Código único que os usuários usarão para entrar. Sem espaços.</div></div>
+            <div className="modal-actions"><button className="btn btn-ghost" onClick={()=>setModalEmpresa(false)}>Cancelar</button><button className="btn btn-master" onClick={criarEmpresa} disabled={!formEmp.nome||!formEmp.codigo}>Criar Empresa</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SistemaEmpresa({user,onLogout}){
+  const [page,setPage]=React.useState("dashboard");
+  const [data,setData]=React.useState({candidatos:[],vagas:[]});
+  const [loading,setLoading]=React.useState(true);
+  const [origens,setOrigens]=React.useState(["Tráfego Pago (Meta/Google)","Indicação","Orgânico (Gupy/LinkedIn)","Outros"]);
+  const isMasterVisit = user.perfil==="master";
+  const empId = user.empresa_id;
+
+  React.useEffect(()=>{
+    const load=async()=>{
+      setLoading(true);
+      try{
+        if(!empId){setLoading(false);return;}
+        const filtroEmp=`&empresa_id=eq.${empId}`;
+        const [c,v]=await Promise.all([
+          db.get("candidatos",filtroEmp),
+          db.get("vagas",filtroEmp)
+        ]);
+        setData({candidatos:Array.isArray(c)?c:[],vagas:Array.isArray(v)?v:[]});
+      }catch(e){console.error(e);}
+      setLoading(false);
+    };load();
+  },[empId]);
+
+  const podeVerTudo = ["master","coordenador"].includes(user.perfil);
+  const podeCriarUsuarios = ["master","coordenador"].includes(user.perfil);
+  const podeEditarVagas = ["master","coordenador","assistente"].includes(user.perfil);
+  const meuscandidatos = podeVerTudo ? data.candidatos : data.candidatos.filter(c => c.recrutador===user.nome||c.recrutador===user.login);
+  const perfilInfo=PERFIS[user.perfil]||PERFIS.assistente;
+
+  const nav=[
+    {id:"dashboard",label:"Dashboard",always:true,icon:IC.dash},
+    {id:"candidatos",label:"candidatos",always:true,icon:IC.cand,badge:meuscandidatos.length},
+    {id:"vagas",label:"Vagas",always:true,icon:IC.vaga,badge:data.vagas.filter(v=>v.status==="Aberta").length},
+    {id:"agenda",label:"Agenda",always:true,icon:IC.cal},
+    {id:"pipeline",label:"Pipeline",always:true,icon:IC.funnel},
+    {id:"usuarios",label:"Usuários",perm:podeCriarUsuarios,icon:IC.users},
+    {id:"origens",label:"Origens",perm:podeCriarUsuarios,icon:IC.filter},
+  ];
+
+  return(
+    <div className="app">
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <LogoGD size={30}/>
+            <div>
+              <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:11,color:"var(--text)",lineHeight:1.2}}>{user.empresa_nome||"Empresa"}</div>
+              <div style={{fontSize:9,color:"var(--green)",fontWeight:500,letterSpacing:".04em",marginTop:1}}>Temay Ops · RH</div>
+            </div>
+          </div>
+          {isMasterVisit&&<div style={{marginTop:8,background:"rgba(250,166,26,0.15)",color:"#faa61a",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700,textAlign:"center"}}>👑 Visita Master</div>}
+        </div>
+        <nav className="sidebar-nav">
+          <div className="nav-section">Menu</div>
+          {nav.map(item=>{
+            const ok=item.always||item.perm;
+            return(
+              <button key={item.id} className={`nav-item${page===item.id?" active":""}${!ok?" locked":""}`} onClick={()=>ok&&setPage(item.id)}>
+                <I d={item.icon} s={14}/>{item.label}
+                {ok&&item.badge!==undefined&&item.badge>0&&<span className="nav-badge">{item.badge}</span>}
+                {!ok&&<I d={IC.lock} s={12} c="var(--text3)"/>}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="sidebar-user">
+          <div className="user-avatar" style={{background:perfilInfo.cor}}>{ini(user.nome)}</div>
+          <div>
+            <div className="user-name">{user.nome.split(" ")[0]}</div>
+            <span className="user-role" style={{background:`${perfilInfo.cor}20`,color:perfilInfo.cor}}>{perfilInfo.label}</span>
+          </div>
+          <button className="logout-btn" onClick={onLogout} title="Sair">⎋</button>
+        </div>
+      </aside>
+
+      <div className="main">
+        <header className="topbar">
+          <div className="topbar-title">{{dashboard:"Dashboard",candidatos:"candidatos",vagas:"Vagas",agenda:"Agenda",pipeline:"Pipeline",usuarios:"Usuários",origens:"Origens"}[page]||page}</div>
+          <div style={{fontSize:11,color:"var(--green)",background:"var(--green-dim)",padding:"4px 12px",borderRadius:20,fontWeight:600}}>🟢 Online</div>
+          <div style={{position:"relative",cursor:"pointer",background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",padding:"8px"}}>
+            <I d={IC.bell} s={15}/>
+            <span style={{position:"absolute",top:5,right:5,width:6,height:6,background:"var(--green)",borderRadius:"50%",border:"2px solid var(--bg2)"}}></span>
+          </div>
+        </header>
+
+        <main className="content">
+          {loading?<div style={{textAlign:"center",padding:60,color:"var(--text2)"}}>Carregando...</div>:(
+            <>
+              {page==="dashboard"&&<DashboardEmp data={{...data,candidatos:meuscandidatos}} origens={origens}/>}
+              {page==="candidatos"&&<candidatosEmp data={{...data,candidatos:meuscandidatos}} setData={setData} user={user} empresaId={empId} origens={origens} podeVerTudo={podeVerTudo}/>}
+              {page==="vagas"&&(podeEditarVagas?<VagasEmp data={data} setData={setData} empresaId={empId}/>:<AccessDenied/>)}
+              {page==="agenda"&&<AgendaEmp data={{...data,candidatos:meuscandidatos}}/>}
+              {page==="pipeline"&&<PipelineEmp data={{...data,candidatos:meuscandidatos}} setData={setData}/>}
+              {page==="usuarios"&&(podeCriarUsuarios?<UsuariosEmp empresaId={empId} user={user}/>:<AccessDenied/>)}
+              {page==="origens"&&(podeCriarUsuarios?<OrigensEmp origens={origens} setOrigens={setOrigens}/>:<AccessDenied/>)}
+            </>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function DashboardEmp({data,origens}){
+  const [f1,setF1]=React.useState("");const [f2,setF2]=React.useState("");
+  const [fRec,setFRec]=React.useState("Todos");const [fOrig,setFOrig]=React.useState("Todas");const [fVaga,setFVaga]=React.useState("Todas");
+  const recrutadores=[...new Set(data.candidatos.map(c=>c.recrutador).filter(Boolean))];
+  const vagasU=[...new Set(data.candidatos.map(c=>c.vaga).filter(Boolean))];
+  const filtrados=data.candidatos.filter(c=>{
+    const dOk=(!f1||c.data>=f1)&&(!f2||c.data<=f2);
+    const rOk=fRec==="Todos"||c.recrutador===fRec;
+    const oOk=fOrig==="Todas"||(c.origem_contato||c.origem)===fOrig;
+    const vOk=fVaga==="Todas"||c.vaga===fVaga;
+    return dOk&&rOk&&oOk&&vOk;
+  });
+  const temF=f1||f2||fRec!=="Todos"||fOrig!=="Todas"||fVaga!=="Todas";
+  const limpar=()=>{setF1("");setF2("");setFRec("Todos");setFOrig("Todas");setFVaga("Todas");};
+  const total=filtrados.length;
+  const aprov=filtrados.filter(c=>c.status==="Aprovado"||c.status==="Contratado").length;
+  const vagasAb=data.vagas.filter(v=>v.status==="Aberta");
+  const totalPosicoes=vagasAb.reduce((a,v)=>a+(parseInt(v.vagas_abertas)||1),0);
+  const taxa=total>0?((aprov/total)*100).toFixed(1):0;
+  const funil=[
+    {etapa:"Novo",count:filtrados.filter(c=>c.status==="Novo").length,color:"#9ea3ad"},
+    {etapa:"Entrevista",count:filtrados.filter(c=>c.status==="Em Entrevista").length,color:"#faa61a"},
+    {etapa:"Aprovado",count:filtrados.filter(c=>c.status==="Aprovado").length,color:"#00e5a0"},
+    {etapa:"Contratado",count:filtrados.filter(c=>c.status==="Contratado").length,color:"#5865f2"},
+  ];
+  const maxF=Math.max(...funil.map(f=>f.count),1);
+  const hoje=new Date().toISOString().split("T")[0];
+  const entHoje=data.candidatos.filter(c=>c.data_entrevista===hoje);
+  const recentes=[...filtrados].sort((a,b)=>new Date(b.created_at||b.data)-new Date(a.created_at||a.data)).slice(0,6);
+
+  const diasAberta=(dataAbertura)=>{
+    if(!dataAbertura)return null;
+    const diff=Math.floor((new Date()-new Date(dataAbertura))/(1000*60*60*24));
+    return diff;
+  };
+  const corDias=(d)=>d===null?"var(--text3)":d<=15?"var(--green)":d<=30?"var(--yellow)":"var(--red)";
+
+  return(
+    <>
+      <div className="filter-section">
+        <div className="filter-title"><I d={IC.filter} s={13}/>Filtros {temF&&<span style={{background:"var(--green-dim)",color:"var(--green)",fontSize:9,padding:"1px 6px",borderRadius:20,fontWeight:700}}>ATIVO</span>}</div>
+        <div className="filter-row">
+          <input className="filter-input" type="date" value={f1} onChange={e=>setF1(e.target.value)} style={{maxWidth:150}}/>
+          <input className="filter-input" type="date" value={f2} onChange={e=>setF2(e.target.value)} style={{maxWidth:150}}/>
+          <select className="filter-select" value={fRec} onChange={e=>setFRec(e.target.value)}><option value="Todos">Todos Recrutadores</option>{recrutadores.map(r=><option key={r}>{r}</option>)}</select>
+          <select className="filter-select" value={fOrig} onChange={e=>setFOrig(e.target.value)}><option value="Todas">Todas Origens</option>{ORIGEM_OPTS.map(o=><option key={o}>{o}</option>)}</select>
+          <select className="filter-select" value={fVaga} onChange={e=>setFVaga(e.target.value)}><option value="Todas">Todas Vagas</option>{vagasU.map(v=><option key={v}>{v}</option>)}</select>
+          {temF&&<button className="btn-clear" onClick={limpar}>✕ Limpar</button>}
+        </div>
+        {temF&&<div style={{fontSize:11,color:"var(--text3)",marginTop:7}}>{total} candidato{total!==1?"s":""} encontrado{total!==1?"s":""}</div>}
+      </div>
+      <div className="kpi-grid">
+        {[
+          {label:"candidatos",value:total,sub:temF?"filtrados":"no sistema",accent:"var(--green)"},
+          {label:"Vagas Abertas",value:vagasAb.length,sub:`${totalPosicoes} posições`,accent:"var(--blue)"},
+          {label:"Entrevistas Hoje",value:entHoje.length,sub:"agendadas",accent:"var(--purple)"},
+          {label:"Taxa Aprovação",value:`${taxa}%`,sub:"aprovados + contratados",accent:"var(--yellow)"},
+        ].map(k=>(
+          <div className="kpi-card" key={k.label} style={{"--accent":k.accent}}>
+            <div className="kpi-label">{k.label}</div>
+            <div className="kpi-value">{k.value}</div>
+            <div className="kpi-sub">{k.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid-3-1">
+        <div className="card">
+          <div className="card-header"><span className="card-title">candidatos Recentes</span></div>
+          {recentes.length===0?<div className="empty-state" style={{padding:20}}><div style={{fontSize:13}}>Nenhum resultado</div></div>:(
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>candidato</th><th>Vaga</th><th>Origem</th><th>Recrutador</th><th>Status</th></tr></thead>
+                <tbody>{recentes.map(c=>(
+                  <tr key={c.id}>
+                    <td><div className="flex-center"><div className="avatar-sm">{ini(c.nome)}</div><div><div style={{fontWeight:600,fontSize:12}}>{c.nome}</div><div style={{fontSize:10,color:"var(--text3)"}}>{c.telefone||""}</div></div></div></td>
+                    <td style={{fontSize:11,color:"var(--text2)"}}>{c.vaga||"-"}</td>
+                    <td style={{fontSize:11,color:"var(--text2)",maxWidth:120}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.origem_contato||c.origem||"-"}</div></td>
+                    <td style={{fontSize:11,color:"var(--text2)"}}>{c.recrutador||"-"}</td>
+                    <td><span className="badge" style={{background:`${SC(c.status)}20`,color:SC(c.status)}}>{c.status||"Novo"}</span></td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div className="card">
+          <div className="card-header"><span className="card-title">Funil</span></div>
+          {funil.map(f=>(
+            <div className="funil-step" key={f.etapa}>
+              <div className="funil-label">{f.etapa}</div>
+              <div className="funil-bar-wrap"><div className="funil-bar" style={{width:`${(f.count/maxF)*100}%`,background:f.color}}>{f.count>0&&<span>{f.count}</span>}</div></div>
+              <div className="funil-count">{f.count}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid-2">
+        <div className="card">
+          <div className="card-header"><span className="card-title">Entrevistas Hoje</span></div>
+          {entHoje.length===0?<div className="empty-state" style={{padding:20}}><div style={{fontSize:28,marginBottom:8}}>📅</div><div style={{fontSize:12}}>Nenhuma entrevista hoje</div></div>
+            :entHoje.map(c=>(
+              <div className="entrevista-card" key={c.id}>
+                <div style={{background:"var(--green-dim)",color:"var(--green)",borderRadius:"var(--radius-sm)",padding:"7px 10px",textAlign:"center",flexShrink:0}}>
+                  <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:14}}>{c.horario_entrevista||"--:--"}</div>
+                  <div style={{fontSize:9}}>hoje</div>
+                </div>
+                <div className="avatar-sm">{ini(c.nome)}</div>
+                <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{c.nome}</div><div style={{fontSize:11,color:"var(--text2)"}}>{c.vaga}</div></div>
+              </div>
+            ))}
+        </div>
+        <div className="card">
+          <div className="card-header"><span className="card-title">Vagas Abertas</span></div>
+          {vagasAb.slice(0,5).map(v=>{
+            const dias=diasAberta(v.data_abertura);
+            return(
+              <div key={v.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600}}>{v.titulo}</div>
+                  <div style={{fontSize:11,color:"var(--text2)"}}>{v.departamento||""}</div>
+                  {dias!==null&&<div style={{fontSize:10,color:corDias(dias),fontWeight:600,marginTop:2}}>⏱ {dias} dia{dias!==1?"s":""} aberta</div>}
+                </div>
+                <div style={{textAlign:"right"}}>
+                  {v.salario&&<div style={{fontSize:11,fontWeight:700,color:"var(--green)"}}>{v.salario}</div>}
+                  <span className="pill pill-green">{v.vagas_abertas||1} posição{(v.vagas_abertas||1)>1?"s":""}</span>
+                  {v.motivo_abertura&&<div style={{fontSize:10,color:"var(--text3)",marginTop:2}}>{v.motivo_abertura}</div>}
+                </div>
+              </div>
+            );
+          })}
+          {vagasAb.length===0&&<div className="empty-state" style={{padding:20}}><div style={{fontSize:12}}>Nenhuma vaga aberta</div></div>}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Formcandidato({candidato,vagas,candidatos,onSalvar,onFechar}){
+  const hoje=new Date().toISOString().split("T")[0];
+  const INIT={nome:"",email:"",telefone:"",vaga:"",origem_contato:"Tráfego Pago (Meta/Google)",perfil:"",recrutador:"",status:"Novo",tipo_entrevista:"",data_entrevista:"",horario_entrevista:"",data:hoje,link_meet:"",observacoes:""};
+  const [form,setForm]=React.useState(candidato?{nome:candidato.nome||"",email:candidato.email||"",telefone:candidato.telefone||"",vaga:candidato.vaga||"",origem_contato:candidato.origem_contato||candidato.origem||"Tráfego Pago (Meta/Google)",perfil:candidato.perfil||"",recrutador:candidato.recrutador||"",status:candidato.status||"Novo",tipo_entrevista:candidato.tipo_entrevista||"",data_entrevista:candidato.data_entrevista||"",horario_entrevista:candidato.horario_entrevista||"",data:candidato.data||hoje,link_meet:candidato.link_meet||"",observacoes:candidato.observacoes||""}:INIT);
+  const [erros,setErros]=React.useState({});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+
+  const validar=()=>{
+    const e={};
+    if(!form.nome.trim())e.nome="Nome é obrigatório";
+    if(!form.vaga)e.vaga="Vaga é obrigatória";
+    if(form.telefone){
+      const tl=limTel(form.telefone);
+      const dup=candidatos.find(c=>{if(candidato&&c.id===candidato.id)return false;return limTel(c.telefone||"")===tl&&tl.length>0;});
+      if(dup)e.telefone=`Telefone já cadastrado para ${dup.nome}`;
+    }
+    setErros(e);return Object.keys(e).length===0;
+  };
+
+  return(
+    <div className="modal-overlay" onClick={onFechar}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-header"><span className="modal-title">{candidato?"✏️ Editar candidato":"👤 Novo candidato"}</span><button className="modal-close" onClick={onFechar}>×</button></div>
+        <div className="modal-section">Dados Pessoais</div>
+        <div className="form-group"><label className="form-label">Nome <span>*</span></label><input className={`form-input${erros.nome?" error":""}`} value={form.nome} onChange={e=>set("nome",e.target.value)} placeholder="Nome completo"/>{erros.nome&&<div className="form-error">{erros.nome}</div>}</div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">E-mail</label><input className="form-input" type="email" value={form.email} onChange={e=>set("email",e.target.value)} placeholder="email@exemplo.com"/></div>
+          <div className="form-group"><label className="form-label">Telefone</label><input className={`form-input${erros.telefone?" error":""}`} value={form.telefone} onChange={e=>set("telefone",e.target.value)} placeholder="(11) 99999-9999"/>{erros.telefone&&<div className="form-error">⚠️ {erros.telefone}</div>}</div>
+        </div>
+        <div className="modal-section">Vaga e Origem</div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">Vaga <span>*</span></label><select className={`form-input${erros.vaga?" error":""}`} value={form.vaga} onChange={e=>set("vaga",e.target.value)}><option value="">Selecione</option>{vagas.map(v=><option key={v.id}>{v.titulo}</option>)}</select>{erros.vaga&&<div className="form-error">{erros.vaga}</div>}</div>
+          <div className="form-group"><label className="form-label">Origem <span>*</span></label><select className="form-input" value={form.origem_contato} onChange={e=>set("origem_contato",e.target.value)}>{ORIGEM_OPTS.map(o=><option key={o}>{o}</option>)}</select></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">Perfil</label><input className="form-input" value={form.perfil} onChange={e=>set("perfil",e.target.value)} placeholder="Júnior, Pleno, Sênior..."/></div>
+          <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status} onChange={e=>set("status",e.target.value)}>{STATUS_OPTS.map(s=><option key={s}>{s}</option>)}</select></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">Recrutador</label><input className="form-input" value={form.recrutador} onChange={e=>set("recrutador",e.target.value)} placeholder="Nome do recrutador"/></div>
+          <div className="form-group"><label className="form-label">Data Cadastro</label><input className="form-input" type="date" value={form.data} onChange={e=>set("data",e.target.value)}/></div>
+        </div>
+        <div className="modal-section">Entrevista</div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">Tipo</label><select className="form-input" value={form.tipo_entrevista} onChange={e=>set("tipo_entrevista",e.target.value)}><option value="">Selecione</option>{TIPO_ENT_OPTS.map(t=><option key={t}>{t}</option>)}</select></div>
+          <div className="form-group"><label className="form-label">Data</label><input className="form-input" type="date" value={form.data_entrevista} onChange={e=>set("data_entrevista",e.target.value)}/></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label className="form-label">Horário</label><select className="form-input" value={form.horario_entrevista} onChange={e=>set("horario_entrevista",e.target.value)}><option value="">Selecione</option>{HORARIOS.map(h=><option key={h}>{h}</option>)}</select></div>
+          <div className="form-group"><label className="form-label">Link Meet</label><input className="form-input" value={form.link_meet} onChange={e=>set("link_meet",e.target.value)} placeholder="https://meet.google.com/..."/></div>
+        </div>
+        <div className="modal-section">Observações</div>
+        <div className="form-group"><textarea className="form-textarea" value={form.observacoes} onChange={e=>set("observacoes",e.target.value)} placeholder="Feedback, anotações..."/></div>
+        <div className="modal-actions"><button className="btn btn-ghost" onClick={onFechar}>Cancelar</button><button className="btn btn-primary" onClick={()=>{if(validar())onSalvar(form);}}>{candidato?"Salvar":"Cadastrar"}</button></div>
+      </div>
+    </div>
+  );
+}
+
+function candidatosEmp({data,setData,user,empresaId,origens,podeVerTudo}){
+  const [modal,setModal]=React.useState(false);
+  const [editando,setEditando]=React.useState(null);
+  const [confirmDel,setConfirmDel]=React.useState(null);
+  const [busca,setBusca]=React.useState("");const [fTel,setFTel]=React.useState("");
+  const [fStatus,setFStatus]=React.useState("Todos");const [fOrigem,setFOrigem]=React.useState("Todas");const [fVaga,setFVaga]=React.useState("Todas");
+  const [fRec,setFRec]=React.useState("Todos");
+  const recrutadores=[...new Set(data.candidatos.map(c=>c.recrutador).filter(Boolean))];
+
+  const filtrados=data.candidatos.filter(c=>{
+    const bOk=!busca||c.nome?.toLowerCase().includes(busca.toLowerCase())||c.email?.toLowerCase().includes(busca.toLowerCase());
+    const tOk=!fTel||limTel(c.telefone||"").includes(limTel(fTel));
+    const sOk=fStatus==="Todos"||c.status===fStatus;
+    const oOk=fOrigem==="Todas"||(c.origem_contato||c.origem)===fOrigem;
+    const vOk=fVaga==="Todas"||c.vaga===fVaga;
+    const rOk=fRec==="Todos"||c.recrutador===fRec;
+    return bOk&&tOk&&sOk&&oOk&&vOk&&rOk;
+  });
+  const vagasU=[...new Set(data.candidatos.map(c=>c.vaga).filter(Boolean))];
+  const temF=busca||fTel||fStatus!=="Todos"||fOrigem!=="Todas"||fVaga!=="Todas"||fRec!=="Todos";
+  const limpar=()=>{setBusca("");setFTel("");setFStatus("Todos");setFOrigem("Todas");setFVaga("Todas");setFRec("Todos");};
+
+  const salvar=async(form)=>{
+    const item={...form,empresa_id:empresaId};
+    if(editando){
+      await db.patch("candidatos",editando,item);
+      setData(d=>({...d,candidatos:d.candidatos.map(c=>c.id===editando?{...c,...item}:c)}));
+    }else{
+      const r=await db.post("candidatos",item);
+      if(Array.isArray(r)&&r[0])setData(d=>({...d,candidatos:[r[0],...d.candidatos]}));
+      else setData(d=>({...d,candidatos:[{...item,id:Date.now().toString()},...d.candidatos]}));
+    }
+    setModal(false);setEditando(null);
+  };
+
+  const excluir=async(id)=>{
+    await db.delete("candidatos",id);
+    setData(d=>({...d,candidatos:d.candidatos.filter(c=>c.id!==id)}));
+    setConfirmDel(null);
+  };
+
+  const exportCSV=()=>{
+    const cols=["Nome","Email","Telefone","Vaga","Origem","Perfil","Recrutador","Status","Data Entrevista","Horário","Observações"];
+    const rows=filtrados.map(c=>[c.nome||"",c.email||"",c.telefone||"",c.vaga||"",c.origem_contato||c.origem||"",c.perfil||"",c.recrutador||"",c.status||"",c.data_entrevista||"",c.horario_entrevista||"",c.observacoes||""]);
+    const csv=[cols,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="candidatos.csv";a.click();URL.revokeObjectURL(url);
+  };
+
+  return(
+    <div style={{position:"relative"}}>
+      <div className="page-header">
+        <div><div className="page-title">candidatos</div><div className="page-subtitle">{filtrados.length} de {data.candidatos.length}{temF?" (filtrado)":""}</div></div>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn btn-excel" onClick={exportCSV}><I d={IC.download} s={13}/>Exportar</button>
+          <button className="btn btn-primary" onClick={()=>{setEditando(null);setModal(true);}}><I d={IC.plus} s={13}/>Novo candidato</button>
+        </div>
+      </div>
+      <div className="filter-section">
+        <div className="filter-title"><I d={IC.filter} s={13}/>Filtros {temF&&<span style={{background:"var(--green-dim)",color:"var(--green)",fontSize:9,padding:"1px 6px",borderRadius:20,fontWeight:700}}>ATIVO</span>}</div>
+        <div className="filter-row">
+          <div style={{position:"relative",flex:1,minWidth:150}}><span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"var(--text3)"}}><I d={IC.search} s={13}/></span><input className="filter-input" style={{paddingLeft:32}} placeholder="Nome ou e-mail..." value={busca} onChange={e=>setBusca(e.target.value)}/></div>
+          <div style={{position:"relative",flex:1,minWidth:130}}><span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"var(--text3)"}}><I d={IC.phone} s={13}/></span><input className="filter-input" style={{paddingLeft:32}} placeholder="Telefone..." value={fTel} onChange={e=>setFTel(e.target.value)}/></div>
+          <select className="filter-select" value={fStatus} onChange={e=>setFStatus(e.target.value)}><option value="Todos">Todos Status</option>{STATUS_OPTS.map(s=><option key={s}>{s}</option>)}</select>
+          <select className="filter-select" value={fOrigem} onChange={e=>setFOrigem(e.target.value)}><option value="Todas">Todas Origens</option>{(origens||ORIGEM_OPTS).map(o=><option key={o}>{o}</option>)}</select>
+          <select className="filter-select" value={fVaga} onChange={e=>setFVaga(e.target.value)}><option value="Todas">Todas Vagas</option>{vagasU.map(v=><option key={v}>{v}</option>)}</select>
+          {podeVerTudo&&<select className="filter-select" value={fRec} onChange={e=>setFRec(e.target.value)}><option value="Todos">Todos Recrutadores</option>{recrutadores.map(r=><option key={r}>{r}</option>)}</select>}
+          {temF&&<button className="btn-clear" onClick={limpar}>✕</button>}
+        </div>
+      </div>
+      <div className="card">
+        {filtrados.length===0?<div className="empty-state"><div style={{fontSize:40,marginBottom:10}}>👤</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:5}}>Nenhum candidato</div><div style={{fontSize:12}}>{temF?"Ajuste os filtros":"Cadastre o primeiro"}</div></div>:(
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>candidato</th><th>Telefone</th><th>Origem</th><th>Vaga</th><th>Perfil</th><th>Recrutador</th><th>Status</th><th>Entrevista</th><th>Ações</th></tr></thead>
+              <tbody>{filtrados.map(c=>(
+                <tr key={c.id}>
+                  <td><div className="flex-center"><div className="avatar-sm">{ini(c.nome)}</div><div><div style={{fontWeight:600,fontSize:12}}>{c.nome}</div><div style={{fontSize:10,color:"var(--text3)"}}>{c.email||""}</div></div></div></td>
+                  <td style={{fontSize:12,color:"var(--text2)"}}>{c.telefone||"-"}</td>
+                  <td style={{fontSize:11,color:"var(--text2)",maxWidth:110}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.origem_contato||c.origem||"-"}</div></td>
+                  <td style={{fontSize:12,maxWidth:110}}><div style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.vaga||"-"}</div></td>
+                  <td style={{fontSize:11,color:"var(--text2)"}}>{c.perfil||"-"}</td>
+                  <td style={{fontSize:11,color:"var(--text2)"}}>{c.recrutador||"-"}</td>
+                  <td><span className="badge" style={{background:`${SC(c.status)}20`,color:SC(c.status)}}>{c.status||"Novo"}</span></td>
+                  <td style={{fontSize:11,color:"var(--text2)"}}>{c.data_entrevista?<div><div>{c.data_entrevista}</div>{c.horario_entrevista&&<div style={{color:"var(--green)",fontWeight:600}}>{c.horario_entrevista}</div>}</div>:"-"}</td>
+                  <td><div style={{display:"flex",gap:4}}><button className="btn btn-ghost btn-sm" onClick={()=>{setEditando(c.id);setModal(true);}} style={{padding:"4px 7px"}}><I d={IC.edit} s={11}/></button><button className="btn btn-danger btn-sm" onClick={()=>setConfirmDel(c)} style={{padding:"4px 7px"}}><I d={IC.trash} s={11}/></button></div></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {modal&&<Formcandidato candidato={editando?data.candidatos.find(c=>c.id===editando):null} vagas={data.vagas} candidatos={data.candidatos} onSalvar={salvar} onFechar={()=>{setModal(false);setEditando(null);}}/>}
+      {confirmDel&&(
+        <div className="modal-overlay" onClick={()=>setConfirmDel(null)}>
+          <div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+            <div className="confirm-box"><div style={{fontSize:34,marginBottom:10}}>🗑️</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:7}}>Excluir candidato?</div><div style={{fontSize:12,color:"var(--text2)",marginBottom:16}}>Tem certeza? Esta ação não pode ser desfeita.<br/><strong style={{color:"var(--text)"}}>{confirmDel.nome}</strong></div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button className="btn btn-ghost" onClick={()=>setConfirmDel(null)}>Cancelar</button><button className="btn btn-danger" onClick={()=>excluir(confirmDel.id)}>Excluir</button></div></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VagasEmp({data,setData,empresaId}){
+  const [modal,setModal]=React.useState(false);const [editando,setEditando]=React.useState(null);const [confirmDel,setConfirmDel]=React.useState(null);
+  const FINIT={titulo:"",departamento:"",tipo:"CLT",salario:"",prioridade:"Média",status:"Aberta",vagas_abertas:1,recrutador:"",observacoes:"",data_abertura:new Date().toISOString().split("T")[0],motivo_abertura:"Aumento de Quadro"};
+  const [form,setForm]=React.useState(FINIT);
+  const prioColor={Alta:"var(--red)",Média:"var(--yellow)",Baixa:"var(--green)"};
+  const abrirEditar=v=>{setEditando(v.id);setForm({titulo:v.titulo||"",departamento:v.departamento||"",tipo:v.tipo||"CLT",salario:v.salario||"",prioridade:v.prioridade||"Média",status:v.status||"Aberta",vagas_abertas:v.vagas_abertas||1,recrutador:v.recrutador||"",observacoes:v.observacoes||"",data_abertura:v.data_abertura||"",motivo_abertura:v.motivo_abertura||"Aumento de Quadro"});setModal(true);};
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const salvar=async()=>{
+    const item={...form,vagas_abertas:parseInt(form.vagas_abertas)||1,empresa_id:empresaId};
+    if(editando){await db.patch("vagas",editando,item);setData(d=>({...d,vagas:d.vagas.map(v=>v.id===editando?{...v,...item}:v)}));}
+    else{const r=await db.post("vagas",{...item,candidatos_count:0});if(Array.isArray(r)&&r[0])setData(d=>({...d,vagas:[r[0],...d.vagas]}));else setData(d=>({...d,vagas:[{...item,id:Date.now().toString()},...d.vagas]}));}
+    setModal(false);
+  };
+  const excluir=async(id)=>{await db.delete("vagas",id);setData(d=>({...d,vagas:d.vagas.filter(v=>v.id!==id)}));setConfirmDel(null);};
+  const total=data.vagas.filter(v=>v.status==="Aberta").reduce((a,v)=>a+(parseInt(v.vagas_abertas)||1),0);
+
+  return(
+    <div style={{position:"relative"}}>
+      <div className="page-header">
+        <div><div className="page-title">Vagas</div><div className="page-subtitle">{data.vagas.filter(v=>v.status==="Aberta").length} vagas · {total} posições abertas</div></div>
+        <button className="btn btn-primary" onClick={()=>{setEditando(null);setForm(FINIT);setModal(true);}}><I d={IC.plus} s={13}/>Nova Vaga</button>
+      </div>
+      <div className="vagas-grid">
+        {data.vagas.map(v=>(
+          <div className="vaga-card" key={v.id}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14}}>{v.titulo}</div><div style={{fontSize:12,color:"var(--text2)",marginTop:2}}>{v.departamento||""}</div></div><span className="badge" style={{background:`${SC(v.status)}20`,color:SC(v.status)}}>{v.status}</span></div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:8,alignItems:"center"}}><span style={{fontSize:11,color:"var(--text2)"}}>{v.tipo}</span><span style={{fontSize:11,color:"var(--text2)"}}>{v.candidatos_count||0} candidatos</span><span style={{fontSize:11,color:prioColor[v.prioridade],fontWeight:600}}>{v.prioridade}</span>{v.recrutador&&<span style={{fontSize:11,color:"var(--text2)"}}>· {v.recrutador}</span>}</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10}}>{v.salario?<div style={{fontSize:13,fontWeight:700,color:"var(--green)"}}>{v.salario}</div>:<div/>}<span className="pill pill-green">{v.vagas_abertas||1} posição{(v.vagas_abertas||1)>1?"s":""}</span></div>
+            {v.observacoes&&<div style={{marginTop:8,fontSize:11,color:"var(--text3)",fontStyle:"italic"}}>{v.observacoes}</div>}
+            <div style={{display:"flex",gap:8,marginTop:12}}><button className="btn btn-ghost btn-sm" onClick={()=>abrirEditar(v)} style={{flex:1,justifyContent:"center"}}><I d={IC.edit} s={12}/>Editar</button><button className="btn btn-danger btn-sm" onClick={()=>setConfirmDel(v)}><I d={IC.trash} s={12}/></button></div>
+          </div>
+        ))}
+        {data.vagas.length===0&&<div className="empty-state card" style={{gridColumn:"1/-1"}}><div style={{fontSize:40,marginBottom:10}}>💼</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:5}}>Nenhuma vaga</div><div style={{fontSize:12}}>Clique em "Nova Vaga"</div></div>}
+      </div>
+      {modal&&(
+        <div className="modal-overlay" onClick={()=>setModal(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-header"><span className="modal-title">{editando?"✏️ Editar Vaga":"💼 Nova Vaga"}</span><button className="modal-close" onClick={()=>setModal(false)}>×</button></div>
+            <div className="modal-section">Informações</div>
+            <div className="form-group"><label className="form-label">Nome da Vaga <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={form.titulo} onChange={e=>set("titulo",e.target.value)} placeholder="Ex: Analista de RH"/></div>
+            <div className="form-row"><div className="form-group"><label className="form-label">Departamento</label><input className="form-input" value={form.departamento} onChange={e=>set("departamento",e.target.value)}/></div><div className="form-group"><label className="form-label">Recrutador</label><input className="form-input" value={form.recrutador} onChange={e=>set("recrutador",e.target.value)}/></div></div>
+            <div className="form-row"><div className="form-group"><label className="form-label">Data de Abertura</label><input className="form-input" type="date" value={form.data_abertura} onChange={e=>set("data_abertura",e.target.value)}/></div><div className="form-group"><label className="form-label">Motivo da Abertura</label><select className="form-input" value={form.motivo_abertura} onChange={e=>set("motivo_abertura",e.target.value)}><option>Aumento de Quadro</option><option>Substituição</option><option>Novo Projeto</option><option>Outros</option></select></div></div>
+            <div className="form-row"><div className="form-group"><label className="form-label">Tipo</label><select className="form-input" value={form.tipo} onChange={e=>set("tipo",e.target.value)}>{["CLT","PJ","Estágio","Freelance","Temporário"].map(t=><option key={t}>{t}</option>)}</select></div><div className="form-group"><label className="form-label">Qtd. Posições</label><input className="form-input" type="number" min="1" max="99" value={form.vagas_abertas} onChange={e=>set("vagas_abertas",e.target.value)}/></div></div>
+            <div className="form-row"><div className="form-group"><label className="form-label">Salário</label><input className="form-input" value={form.salario} onChange={e=>set("salario",e.target.value)} placeholder="R$ 4.500"/></div><div className="form-group"><label className="form-label">Prioridade</label><select className="form-input" value={form.prioridade} onChange={e=>set("prioridade",e.target.value)}>{["Alta","Média","Baixa"].map(p=><option key={p}>{p}</option>)}</select></div></div>
+            <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status} onChange={e=>set("status",e.target.value)}>{["Aberta","Pausada","Encerrada"].map(s=><option key={s}>{s}</option>)}</select></div>
+            <div className="modal-section">Observações</div>
+            <div className="form-group"><textarea className="form-textarea" value={form.observacoes} onChange={e=>set("observacoes",e.target.value)} placeholder="Requisitos, benefícios..."/></div>
+            <div className="modal-actions"><button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button><button className="btn btn-primary" onClick={salvar} disabled={!form.titulo}>{editando?"Salvar":"Criar Vaga"}</button></div>
+          </div>
+        </div>
+      )}
+      {confirmDel&&(
+        <div className="modal-overlay" onClick={()=>setConfirmDel(null)}>
+          <div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+            <div className="confirm-box"><div style={{fontSize:34,marginBottom:10}}>🗑️</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:7}}>Excluir vaga?</div><div style={{fontSize:12,color:"var(--text2)",marginBottom:16}}><strong style={{color:"var(--text)"}}>{confirmDel.titulo}</strong></div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button className="btn btn-ghost" onClick={()=>setConfirmDel(null)}>Cancelar</button><button className="btn btn-danger" onClick={()=>excluir(confirmDel.id)}>Excluir</button></div></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AgendaEmp({data}){
+  const hoje=new Date().toISOString().split("T")[0];
+  const amanha=new Date(Date.now()+86400000).toISOString().split("T")[0];
+  const semana=new Date(Date.now()+7*86400000).toISOString().split("T")[0];
+  const com=data.candidatos.filter(c=>c.data_entrevista);
+  const S=({title,items,color})=>(
+    <div className="agenda-section">
+      <div className="agenda-section-title"><span style={{width:9,height:9,borderRadius:"50%",background:color,display:"inline-block"}}></span>{title}<span style={{fontWeight:400,color:"var(--text2)",fontSize:12,marginLeft:4}}>({items.length})</span></div>
+      {items.length===0?<div style={{padding:"10px 0",color:"var(--text3)",fontSize:12}}>Nenhuma entrevista</div>:items.map(c=>(
+        <div className="entrevista-card" key={c.id}>
+          <div style={{background:"var(--green-dim)",color:"var(--green)",borderRadius:"var(--radius-sm)",padding:"7px 10px",textAlign:"center",flexShrink:0,minWidth:54}}><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:14}}>{c.horario_entrevista||"--:--"}</div><div style={{fontSize:9,marginTop:1}}>{c.data_entrevista}</div></div>
+          <div className="avatar-sm">{ini(c.nome)}</div>
+          <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13}}>{c.nome}</div><div style={{fontSize:11,color:"var(--text2)"}}>{c.vaga} · {c.recrutador||"RH"}</div>{c.link_meet&&<a href={c.link_meet} target="_blank" rel="noreferrer" style={{fontSize:11,color:"var(--blue)",textDecoration:"none"}}>🔗 Reunião</a>}</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}><span style={{fontSize:10,padding:"2px 7px",borderRadius:20,fontWeight:600,background:"rgba(88,101,242,0.15)",color:"var(--blue)"}}>{c.tipo_entrevista||"Online"}</span><span className="badge" style={{background:`${SC(c.status)}20`,color:SC(c.status)}}>{c.status}</span></div>
+        </div>
+      ))}
+    </div>
+  );
+  return(
+    <>
+      <div className="page-header"><div className="page-title">Agenda de Entrevistas</div></div>
+      <S title="Hoje" items={com.filter(c=>c.data_entrevista===hoje)} color="#00e5a0"/>
+      <S title="Amanhã" items={com.filter(c=>c.data_entrevista===amanha)} color="#5865f2"/>
+      <S title="Esta Semana" items={com.filter(c=>c.data_entrevista>amanha&&c.data_entrevista<=semana)} color="#9b84ec"/>
+      {com.length===0&&<div className="empty-state card"><div style={{fontSize:40,marginBottom:10}}>📅</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:5}}>Sem entrevistas agendadas</div><div style={{fontSize:12}}>Cadastre candidatos com data de entrevista</div></div>}
+    </>
+  );
+}
+
+function PipelineEmp({data,setData}){
+  const cols=["Novo","Em Entrevista","Aprovado","Reprovado","Contratado","Desistente"];
+  const colC={"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#00e5a0","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec"};
+  const mover=async(c,s)=>{await db.patch("candidatos",c.id,{status:s});setData(d=>({...d,candidatos:d.candidatos.map(x=>x.id===c.id?{...x,status:s}:x)}));};
+  return(
+    <>
+      <div className="page-header"><div className="page-title">Pipeline</div><div className="page-subtitle">Use o menu para mover candidatos entre etapas</div></div>
+      <div className="kanban">{cols.map(etapa=>{
+        const items=data.candidatos.filter(c=>c.status===etapa);
+        const cor=colC[etapa];
+        return(
+          <div className="kanban-col" key={etapa}>
+            <div className="kanban-header" style={{background:`${cor}18`}}><span style={{fontSize:12,fontWeight:700,color:cor}}>{etapa}</span><span className="kanban-count" style={{color:cor}}>{items.length}</span></div>
+            {items.map(c=>(
+              <div className="kanban-item" key={c.id}>
+                <div className="flex-center" style={{marginBottom:5}}><div className="avatar-sm" style={{width:22,height:22,fontSize:8}}>{ini(c.nome)}</div><div style={{fontSize:12,fontWeight:600}}>{c.nome}</div></div>
+                <div style={{fontSize:11,color:"var(--text2)",marginBottom:4}}>{c.vaga}</div>
+                {c.recrutador&&<div style={{fontSize:10,color:"var(--text3)",marginBottom:6}}>👤 {c.recrutador}</div>}
+                <select style={{width:"100%",background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",color:"var(--text2)",fontSize:10,padding:"5px 7px",outline:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}} value={etapa} onChange={e=>mover(c,e.target.value)}>{cols.map(col=><option key={col}>{col}</option>)}</select>
+              </div>
+            ))}
+            {items.length===0&&<div style={{padding:"14px 8px",textAlign:"center",color:"var(--text3)",fontSize:11,borderRadius:"var(--radius-sm)",border:"1px dashed var(--border)"}}>Vazio</div>}
+          </div>
+        );
+      })}</div>
+    </>
+  );
+}
+
+function UsuariosEmp({empresaId,user}){
+  const [usuarios,setUsuarios]=React.useState([]);
+  const [loading,setLoading]=React.useState(true);
+  const [modal,setModal]=React.useState(false);
+  const [modalSenha,setModalSenha]=React.useState(null);
+  const [confirmDel,setConfirmDel]=React.useState(null);
+  const [form,setForm]=React.useState({nome:"",email:"",login:"",senha_hash:"Temay@2025",perfil:"assistente"});
+  const [senhaNova,setSenhaNova]=React.useState("");
+  const [msg,setMsg]=React.useState("");
+
+  React.useEffect(()=>{
+    if(empresaId){
+      db.get("sistema_usuarios",`&empresa_id=eq.${empresaId}`).then(r=>{if(Array.isArray(r))setUsuarios(r);setLoading(false);});
+    }else{setLoading(false);}
+  },[empresaId]);
+
+  const salvar=async()=>{
+    if(!form.nome||!form.login)return;
+    const r=await db.post("sistema_usuarios",{...form,empresa_id:empresaId,ativo:true});
+    if(Array.isArray(r)&&r[0])setUsuarios(u=>[r[0],...u]);
+    setModal(false);setForm({nome:"",email:"",login:"",senha_hash:"Temay@2025",perfil:"assistente"});
+  };
+
+  const trocarSenha=async()=>{
+    if(!senhaNova||senhaNova.length<4){setMsg("Mínimo 4 caracteres.");return;}
+    await db.patch("sistema_usuarios",modalSenha.id,{senha_hash:senhaNova});
+    setUsuarios(u=>u.map(x=>x.id===modalSenha.id?{...x,senha_hash:senhaNova}:x));
+    setMsg("✅ Senha alterada com sucesso!");
+    setTimeout(()=>{setModalSenha(null);setMsg("");setSenhaNova("");},2000);
+  };
+
+  const toggleAtivo=async(u)=>{
+    if(u.id===user.id)return;
+    await db.patch("sistema_usuarios",u.id,{ativo:!u.ativo});
+    setUsuarios(us=>us.map(x=>x.id===u.id?{...x,ativo:!x.ativo}:x));
+  };
+
+  const excluir=async(id)=>{
+    await db.delete("sistema_usuarios",id);
+    setUsuarios(u=>u.filter(x=>x.id!==id));
+    setConfirmDel(null);
+  };
+
+  if(loading)return <div style={{textAlign:"center",padding:40,color:"var(--text2)"}}>Carregando...</div>;
+
+  return(
+    <div style={{position:"relative"}}>
+      <div className="page-header">
+        <div><div className="page-title">Usuários</div><div className="page-subtitle">{usuarios.length} usuário{usuarios.length!==1?"s":""} cadastrado{usuarios.length!==1?"s":""}</div></div>
+        <button className="btn btn-primary" onClick={()=>setModal(true)}><I d={IC.plus} s={13}/>Novo Usuário</button>
+      </div>
+      <div className="users-grid">
+        {usuarios.map(u=>{
+          const pm=PERFIS[u.perfil]||PERFIS.assistente;
+          return(
+            <div className="user-card" key={u.id}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                <div style={{width:44,height:44,borderRadius:"50%",background:pm.cor,color:"#000",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:14}}>{ini(u.nome)}</div>
+                <span className="badge" style={{background:u.ativo?"rgba(0,229,160,0.15)":"rgba(240,71,71,0.15)",color:u.ativo?"var(--green)":"var(--red)"}}>{u.ativo?"Ativo":"Inativo"}</span>
+              </div>
+              <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:2}}>{u.nome}</div>
+              <div style={{fontSize:11,color:"var(--text2)",marginBottom:6}}>{u.email||"Sem e-mail"}</div>
+              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:10}}>
+                <span className="badge" style={{background:`${pm.cor}20`,color:pm.cor}}>{pm.label}</span>
+                <span style={{fontSize:10,color:"var(--text3)"}}>@{u.login}</span>
+              </div>
+              {u.id!==user.id&&(
+                <div style={{display:"flex",gap:6}}>
+                  <button className="btn btn-ghost btn-sm" style={{flex:1,justifyContent:"center"}} onClick={()=>toggleAtivo(u)}>{u.ativo?"Desativar":"Ativar"}</button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>{setModalSenha(u);setSenhaNova("");setMsg("");}}>🔑</button>
+                  <button className="btn btn-danger btn-sm" onClick={()=>setConfirmDel(u)}><I d={IC.trash} s={11}/></button>
+                </div>
+              )}
+              {u.id===user.id&&<div style={{fontSize:11,color:"var(--green)",fontWeight:600}}>← Você</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {modal&&(
+        <div className="modal-overlay" onClick={()=>setModal(false)}>
+          <div className="modal" style={{maxWidth:460}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header"><span className="modal-title">👤 Novo Usuário</span><button className="modal-close" onClick={()=>setModal(false)}>×</button></div>
+            <div className="form-row"><div className="form-group"><label className="form-label">Nome <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div><div className="form-group"><label className="form-label">E-mail</label><input className="form-input" type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div></div>
+            <div className="form-row"><div className="form-group"><label className="form-label">Login <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={form.login} onChange={e=>setForm(f=>({...f,login:e.target.value.toLowerCase()}))} placeholder="Ex: joao.silva"/><div className="form-hint">Sem espaços, letras minúsculas</div></div><div className="form-group"><label className="form-label">Perfil</label><select className="form-input" value={form.perfil} onChange={e=>setForm(f=>({...f,perfil:e.target.value}))}><option value="coordenador">Coordenador RH</option><option value="assistente">Assistente RH</option><option value="auxiliar">Auxiliar RH</option></select></div></div>
+            <div className="form-group"><label className="form-label">Senha inicial</label><input className="form-input" value={form.senha_hash} onChange={e=>setForm(f=>({...f,senha_hash:e.target.value}))}/><div className="form-hint">Padrão: Temay@2025 — o usuário pode trocar depois</div></div>
+            <div className="modal-actions"><button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button><button className="btn btn-primary" onClick={salvar} disabled={!form.nome||!form.login}>Criar Usuário</button></div>
+          </div>
+        </div>
+      )}
+
+      {modalSenha&&(
+        <div className="modal-overlay" onClick={()=>setModalSenha(null)}>
+          <div className="modal" style={{maxWidth:380}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header"><span className="modal-title">🔑 Alterar Senha</span><button className="modal-close" onClick={()=>setModalSenha(null)}>×</button></div>
+            <div style={{fontSize:13,color:"var(--text2)",marginBottom:14}}>Alterando senha de <strong style={{color:"var(--text)"}}>{modalSenha.nome}</strong></div>
+            <div className="form-group"><label className="form-label">Nova senha</label><input className="form-input" type="password" value={senhaNova} onChange={e=>setSenhaNova(e.target.value)} placeholder="Mínimo 4 caracteres"/></div>
+            {msg&&<div style={{fontSize:12,color:msg.includes("✅")?"var(--green)":"var(--red)",marginBottom:10}}>{msg}</div>}
+            <div className="modal-actions"><button className="btn btn-ghost" onClick={()=>setModalSenha(null)}>Cancelar</button><button className="btn btn-primary" onClick={trocarSenha}>Salvar Senha</button></div>
+          </div>
+        </div>
+      )}
+
+      {confirmDel&&(
+        <div className="modal-overlay" onClick={()=>setConfirmDel(null)}>
+          <div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+            <div className="confirm-box"><div style={{fontSize:34,marginBottom:10}}>🗑️</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:7}}>Excluir usuário?</div><div style={{fontSize:12,color:"var(--text2)",marginBottom:16}}><strong style={{color:"var(--text)"}}>{confirmDel.nome}</strong></div><div style={{display:"flex",gap:8,justifyContent:"center"}}><button className="btn btn-ghost" onClick={()=>setConfirmDel(null)}>Cancelar</button><button className="btn btn-danger" onClick={()=>excluir(confirmDel.id)}>Excluir</button></div></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrigensEmp({origens,setOrigens}){
+  const [nova,setNova]=React.useState("");
+  const [editIdx,setEditIdx]=React.useState(null);
+  const [editVal,setEditVal]=React.useState("");
+
+  const adicionar=()=>{
+    if(!nova.trim())return;
+    setOrigens(o=>[...o,nova.trim()]);
+    setNova("");
+  };
+  const excluir=(idx)=>setOrigens(o=>o.filter((_,i)=>i!==idx));
+  const salvarEdit=()=>{
+    if(!editVal.trim())return;
+    setOrigens(o=>o.map((x,i)=>i===editIdx?editVal.trim():x));
+    setEditIdx(null);setEditVal("");
+  };
+
+  return(
+    <>
+      <div className="page-header"><div className="page-title">Origens de candidatos</div><div className="page-subtitle">Gerencie as origens disponíveis no cadastro</div></div>
+      <div className="card" style={{maxWidth:500}}>
+        <div className="card-title" style={{marginBottom:14}}>Adicionar nova origem</div>
+        <div style={{display:"flex",gap:8,marginBottom:20}}>
+          <input className="form-input" value={nova} onChange={e=>setNova(e.target.value)} placeholder="Ex: WhatsApp Business" onKeyDown={e=>e.key==="Enter"&&adicionar()} style={{flex:1}}/>
+          <button className="btn btn-primary" onClick={adicionar} disabled={!nova.trim()}><I d={IC.plus} s={13}/>Adicionar</button>
+        </div>
+        <div className="card-title" style={{marginBottom:12}}>Origens cadastradas ({origens.length})</div>
+        {origens.map((o,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
+            {editIdx===i?(
+              <>
+                <input className="form-input" style={{flex:1}} value={editVal} onChange={e=>setEditVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&salvarEdit()}/>
+                <button className="btn btn-primary btn-sm" onClick={salvarEdit}>Salvar</button>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setEditIdx(null)}>✕</button>
+              </>
+            ):(
+              <>
+                <div style={{flex:1,fontSize:13}}>{o}</div>
+                <button className="btn btn-ghost btn-sm" onClick={()=>{setEditIdx(i);setEditVal(o);}}><I d={IC.edit} s={11}/></button>
+                <button className="btn btn-danger btn-sm" onClick={()=>excluir(i)}><I d={IC.trash} s={11}/></button>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function AccessDenied(){return(<div className="empty-state card"><div style={{fontSize:40,marginBottom:10}}>🔒</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,marginBottom:5}}>Acesso Restrito</div><div style={{fontSize:12}}>Seu perfil não tem permissão.</div></div>);}
+
+function App(){
+  const [user,setUser]=React.useState(null);
+  const [token,setToken]=React.useState(null);
+  const [empresaMaster,setEmpresaMaster]=React.useState(null);
+
+  const handleLogin=(u,t)=>{setUser(u);setToken(t);};
+  const handleLogout=()=>{setUser(null);setToken(null);setEmpresaMaster(null);};
+  const entrarEmpresa=(emp)=>{
+    setEmpresaMaster(emp);
+    setUser(u=>({...u,empresa_id:emp.id,empresa_nome:emp.nome,empresa_codigo:emp.codigo,perfil:"master"}));
+  };
+
+  if(!user)return <LoginPage onLogin={handleLogin}/>;
+  if(user.perfil==="master"&&!empresaMaster)return <MasterDashboard onEntrarEmpresa={entrarEmpresa} onLogout={handleLogout}/>;
+  return <SistemaEmpresa user={user} onLogout={handleLogout}/>;
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById('root'));
+</script>
+</body>
+</html>

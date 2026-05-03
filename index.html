@@ -11,8 +11,8 @@ html,body,#root{width:100%;height:100%;min-height:100vh}
 body{background:#1a1d23;color:#e8eaf0;font-family:'Inter',sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 :root{
   --bg:#1a1d23;--bg2:#21252e;--bg3:#2a2f3a;--bg4:#333845;
-  --border:#2e3340;--green:#10d9a0;--green2:#0cb386;
-  --green-dim:rgba(16,217,160,0.12);--green-dim2:rgba(16,217,160,0.06);
+  --border:#2e3340;--green:#9f7aea;--green2:#0cb386;
+  --green-dim:rgba(159,122,234,0.12);--green-dim2:rgba(159,122,234,0.06);
   --text:#e8eaf0;--text2:#8b92a5;--text3:#4a5168;
   --red:#ff4d6a;--yellow:#ffb830;--blue:#5b6cf9;--purple:#9f7aea;
   --radius:14px;--radius-sm:8px;--shadow:0 4px 20px rgba(0,0,0,0.4);
@@ -86,8 +86,8 @@ tr:hover td{background:var(--green-dim2)}
 .btn-ghost:hover{border-color:var(--green);color:var(--green)}
 .btn-danger{background:rgba(240,71,71,0.12);color:var(--red);border:1px solid rgba(240,71,71,0.3)}
 .btn-danger:hover{background:rgba(240,71,71,0.2)}
-.btn-excel{background:rgba(0,229,160,0.1);color:var(--green);border:1px solid rgba(0,229,160,0.25)}
-.btn-excel:hover{background:rgba(0,229,160,0.18)}
+.btn-excel{background:rgba(159,122,234,0.1);color:var(--green);border:1px solid rgba(159,122,234,0.25)}
+.btn-excel:hover{background:rgba(159,122,234,0.18)}
 .btn-sm{padding:5px 9px;font-size:11px}
 .btn-master{background:linear-gradient(135deg,#faa61a,#f04747);color:#fff;border:none}
 .btn-master:hover{opacity:.9;transform:translateY(-1px)}
@@ -137,7 +137,7 @@ tr:hover td{background:var(--green-dim2)}
 
 .login-temay{min-height:100vh;background:linear-gradient(135deg,#1a1c1f 0%,#2b2d31 50%,#1e2124 100%);display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
 .login-temay-bg{position:absolute;inset:0;pointer-events:none}
-.login-temay-bg::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,160,0.08) 0%,transparent 70%);top:-200px;right:-200px}
+.login-temay-bg::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(159,122,234,0.08) 0%,transparent 70%);top:-200px;right:-200px}
 .login-temay-bg::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(88,101,242,0.06) 0%,transparent 70%);bottom:-100px;left:-100px}
 .login-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
 .login-box{position:relative;z-index:1;background:rgba(49,51,56,0.95);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:fadeIn .4s ease;backdrop-filter:blur(10px)}
@@ -153,7 +153,7 @@ tr:hover td{background:var(--green-dim2)}
 .login-input:focus{border-color:var(--green)}
 .login-input.err{border-color:var(--red)}
 .login-btn{width:100%;background:var(--green);color:#000;font-family:var(--font-head);font-weight:700;font-size:14px;padding:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;margin-top:6px;letter-spacing:0.01em}
-.login-btn:hover:not(:disabled){background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,229,160,0.25)}
+.login-btn:hover:not(:disabled){background:var(--green2);transform:translateY(-1px);box-shadow:0 4px 18px rgba(159,122,234,0.25)}
 .login-btn:disabled{opacity:.5;cursor:not-allowed}
 .login-btn-master{background:linear-gradient(135deg,#faa61a,#f04747);color:#fff}
 .login-btn-master:hover:not(:disabled){opacity:.9;box-shadow:0 4px 18px rgba(240,71,71,0.3);transform:translateY(-1px)}
@@ -240,7 +240,7 @@ const PERFIS = {
   master:      {cor:"#ffb830",label:"Master",icon:"👑"},
   admin:       {cor:"#5b6cf9",label:"Administrador",icon:"🛡️"},
   coordenador: {cor:"#5b6cf9",label:"Coordenador RH",icon:"🎯"},
-  assistente:  {cor:"#10d9a0",label:"Assistente RH",icon:"👤"},
+  assistente:  {cor:"#9f7aea",label:"Assistente RH",icon:"👤"},
   auxiliar:    {cor:"#9f7aea",label:"Auxiliar RH",icon:"🔹"},
 };
 
@@ -259,7 +259,7 @@ const STATUS_OPTS = ["Novo","Em Entrevista","Aprovado","Reprovado","Contratado",
 const ORIGEM_OPTS = ["Tráfego Pago (Meta/Google)","Indicação","Orgânico (Gupy/LinkedIn)","Outros"];
 const TIPO_ENT_OPTS = ["Online (Google Meet)","Presencial","Telefone","WhatsApp"];
 const HORARIOS = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
-const SC = s => ({"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#00e5a0","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec","Aberta":"#00e5a0","Pausada":"#faa61a","Encerrada":"#f04747"}[s]||"#9ea3ad");
+const SC = s => ({"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#9f7aea","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec","Aberta":"#9f7aea","Pausada":"#faa61a","Encerrada":"#f04747"}[s]||"#9ea3ad");
 const ini = (n="") => n.split(" ").slice(0,2).map(x=>x[0]).join("").toUpperCase();
 const limTel = t => t ? t.replace(/\D/g,"") : "";
 
@@ -527,7 +527,7 @@ function MasterDashboard({onEntrarEmpresa,onLogout}){
                               <div style={{fontFamily:"var(--font-head)",fontWeight:700,fontSize:14}}>{e.nome}</div>
                               <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>Código: <strong style={{color:"var(--green)"}}>{e.codigo}</strong></div>
                             </div>
-                            <span className="badge" style={{background:e.ativa?"rgba(0,229,160,0.15)":"rgba(240,71,71,0.15)",color:e.ativa?"var(--green)":"var(--red)"}}>{e.ativa?"Ativa":"Inativa"}</span>
+                            <span className="badge" style={{background:e.ativa?"rgba(159,122,234,0.15)":"rgba(240,71,71,0.15)",color:e.ativa?"var(--green)":"var(--red)"}}>{e.ativa?"Ativa":"Inativa"}</span>
                           </div>
                           <div className="stat-row">
                             <div className="stat-item"><div className="stat-num">{cands.length}</div><div className="stat-label">Candidatos</div></div>
@@ -572,7 +572,7 @@ function MasterDashboard({onEntrarEmpresa,onLogout}){
                             <td>{todos.candidatos.filter(c=>c.empresa_id===e.id).length}</td>
                             <td>{todos.vagas.filter(v=>v.empresa_id===e.id&&v.status==="Aberta").length}</td>
                             <td>{todos.usuarios.filter(u=>u.empresa_id===e.id).length}</td>
-                            <td><span className="badge" style={{background:e.ativa?"rgba(0,229,160,0.15)":"rgba(240,71,71,0.15)",color:e.ativa?"var(--green)":"var(--red)"}}>{e.ativa?"Ativa":"Inativa"}</span></td>
+                            <td><span className="badge" style={{background:e.ativa?"rgba(159,122,234,0.15)":"rgba(240,71,71,0.15)",color:e.ativa?"var(--green)":"var(--red)"}}>{e.ativa?"Ativa":"Inativa"}</span></td>
                           </tr>
                         ))}</tbody>
                       </table>
@@ -719,7 +719,7 @@ function SistemaEmpresa({user,onLogout}){
               {minhasEmpresas.map(e=>{
                 const isAtiva=e.id===empresaAtiva;
                 const isNewcorban=e.nome.toUpperCase().includes("NEWCORBAN");
-                const cor=isNewcorban?"#5865f2":"#10b981";
+                const cor=isNewcorban?"#5865f2":"#9f7aea";
                 return(
                   <div key={e.id} onClick={()=>{setEmpresaAtiva(e.id);setData({candidatos:[],vagas:[]});}}
                     style={{padding:"6px 10px",borderRadius:"var(--radius-sm)",cursor:"pointer",fontSize:10,fontWeight:700,
@@ -817,7 +817,7 @@ function DashboardEmp({data,origens}){
   const funil=[
     {etapa:"Novo",count:filtrados.filter(c=>c.status==="Novo").length,color:"#9ea3ad"},
     {etapa:"Entrevista",count:filtrados.filter(c=>c.status==="Em Entrevista").length,color:"#faa61a"},
-    {etapa:"Aprovado",count:filtrados.filter(c=>c.status==="Aprovado").length,color:"#00e5a0"},
+    {etapa:"Aprovado",count:filtrados.filter(c=>c.status==="Aprovado").length,color:"#9f7aea"},
     {etapa:"Contratado",count:filtrados.filter(c=>c.status==="Contratado").length,color:"#5865f2"},
   ];
   const maxF=Math.max(...funil.map(f=>f.count),1);
@@ -1104,7 +1104,7 @@ function CandidatosEmp({data,setData,user,empresaId,origens,podeVerTudo}){
                   <td><span className="badge" style={{background:`${SC(c.status)}20`,color:SC(c.status)}}>{c.status||"Novo"}</span></td>
                   <td style={{fontSize:11,color:"var(--text2)"}}>{c.data_entrevista?<div><div>{c.data_entrevista}</div>{c.horario_entrevista&&<div style={{color:"var(--green)",fontWeight:600}}>{c.horario_entrevista}</div>}</div>:"-"}</td>
                   <td><div style={{display:"flex",gap:4}}>
-                    {c.status==="Aprovado"&&<button className="btn btn-sm" style={{padding:"4px 8px",background:"rgba(16,217,160,0.15)",color:"var(--green)",border:"1px solid rgba(16,217,160,0.35)",borderRadius:"var(--radius-sm)",fontSize:10,fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:3}} onClick={()=>handleContratar(c)}>✓ Contratar</button>}
+                    {c.status==="Aprovado"&&<button className="btn btn-sm" style={{padding:"4px 8px",background:"rgba(159,122,234,0.15)",color:"var(--green)",border:"1px solid rgba(159,122,234,0.35)",borderRadius:"var(--radius-sm)",fontSize:10,fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:3}} onClick={()=>handleContratar(c)}>✓ Contratar</button>}
                     <button className="btn btn-ghost btn-sm" onClick={()=>{setEditando(c.id);setModal(true);}} style={{padding:"4px 7px"}}><I d={IC.edit} s={11}/></button><button className="btn btn-danger btn-sm" onClick={()=>setConfirmDel(c)} style={{padding:"4px 7px"}}><I d={IC.trash} s={11}/></button></div></td>
                 </tr>
               ))}</tbody>
@@ -1228,7 +1228,7 @@ function AgendaEmp({data}){
   return(
     <>
       <div className="page-header"><div className="page-title">Agenda de Entrevistas</div></div>
-      <S title="Hoje" items={com.filter(c=>c.data_entrevista===hoje)} color="#00e5a0"/>
+      <S title="Hoje" items={com.filter(c=>c.data_entrevista===hoje)} color="#9f7aea"/>
       <S title="Amanhã" items={com.filter(c=>c.data_entrevista===amanha)} color="#5865f2"/>
       <S title="Esta Semana" items={com.filter(c=>c.data_entrevista>amanha&&c.data_entrevista<=semana)} color="#9b84ec"/>
       {com.length===0&&<div className="empty-state card"><div style={{fontSize:40,marginBottom:10}}>📅</div><div style={{fontFamily:"var(--font-head)",fontWeight:700,fontSize:14,marginBottom:5}}>Sem entrevistas agendadas</div><div style={{fontSize:12}}>Cadastre candidatos com data de entrevista</div></div>}
@@ -1238,7 +1238,7 @@ function AgendaEmp({data}){
 
 function PipelineEmp({data,setData}){
   const cols=["Novo","Em Entrevista","Aprovado","Reprovado","Contratado","Desistente"];
-  const colC={"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#00e5a0","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec"};
+  const colC={"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#9f7aea","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec"};
   const mover=async(c,s)=>{await db.patch("candidatos",c.id,{status:s});setData(d=>({...d,candidatos:d.candidatos.map(x=>x.id===c.id?{...x,status:s}:x)}));};
   return(
     <>
@@ -1357,7 +1357,7 @@ function UsuariosEmp({empresaId,user,minhasEmpresas}){
             <div className="user-card" key={u.id}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
                 <div style={{width:44,height:44,borderRadius:"50%",background:pm.cor,color:"#000",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-head)",fontWeight:800,fontSize:14}}>{ini(u.nome)}</div>
-                <span className="badge" style={{background:u.ativo?"rgba(0,229,160,0.15)":"rgba(240,71,71,0.15)",color:u.ativo?"var(--green)":"var(--red)"}}>{u.ativo?"Ativo":"Inativo"}</span>
+                <span className="badge" style={{background:u.ativo?"rgba(159,122,234,0.15)":"rgba(240,71,71,0.15)",color:u.ativo?"var(--green)":"var(--red)"}}>{u.ativo?"Ativo":"Inativo"}</span>
               </div>
               <div style={{fontFamily:"var(--font-head)",fontWeight:700,fontSize:14,marginBottom:2}}>{u.nome}</div>
               <div style={{fontSize:11,color:"var(--text2)",marginBottom:6}}>{u.email||"Sem e-mail"}</div>
@@ -1719,7 +1719,7 @@ function ContratacaoModal({candidato,empresaId,onFechar}){
         </div>
 
         {toast&&(
-          <div style={{position:"absolute",bottom:20,left:"50%",transform:"translateX(-50%)",background:toast.type==="error"?"rgba(240,71,71,0.95)":"rgba(16,217,160,0.95)",color:toast.type==="error"?"#fff":"#000",borderRadius:"var(--radius-sm)",padding:"10px 18px",fontSize:13,fontWeight:600,whiteSpace:"nowrap",zIndex:10,boxShadow:"0 4px 16px rgba(0,0,0,.4)",animation:"fadeIn .2s ease"}}>
+          <div style={{position:"absolute",bottom:20,left:"50%",transform:"translateX(-50%)",background:toast.type==="error"?"rgba(240,71,71,0.95)":"rgba(159,122,234,0.95)",color:toast.type==="error"?"#fff":"#000",borderRadius:"var(--radius-sm)",padding:"10px 18px",fontSize:13,fontWeight:600,whiteSpace:"nowrap",zIndex:10,boxShadow:"0 4px 16px rgba(0,0,0,.4)",animation:"fadeIn .2s ease"}}>
             {toast.msg}
           </div>
         )}

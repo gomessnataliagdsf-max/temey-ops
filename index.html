@@ -719,7 +719,7 @@ function SistemaEmpresa({user,onLogout}){
               {minhasEmpresas.map(e=>{
                 const isAtiva=e.id===empresaAtiva;
                 const isNewcorban=e.nome.toUpperCase().includes("NEWCORBAN");
-                const cor=isNewcorban?"#5865f2":"#9f7aea";
+                const cor=isNewcorban?"#5865f2":"#10d9a0";
                 return(
                   <div key={e.id} onClick={()=>{setEmpresaAtiva(e.id);setData({candidatos:[],vagas:[]});}}
                     style={{padding:"6px 10px",borderRadius:"var(--radius-sm)",cursor:"pointer",fontSize:10,fontWeight:700,

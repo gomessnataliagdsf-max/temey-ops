@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Temay Ops · People Analytics</title>
+<title>HRSystem</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -291,27 +291,9 @@ const IC={
   clip:"M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48",
 };
 
-function LogoTemay({size=60}){
-  return(
-    <img
-      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' rx='12' fill='%231a1c1f'/%3E%3Ccircle cx='30' cy='40' r='18' fill='none' stroke='%2300e5a0' stroke-width='3'/%3E%3Ccircle cx='30' cy='40' r='6' fill='%2300e5a0'/%3E%3Cline x1='44' y1='30' x2='60' y2='22' stroke='%2300e5a0' stroke-width='2'/%3E%3Cline x1='44' y1='40' x2='70' y2='40' stroke='%2300e5a0' stroke-width='2'/%3E%3Cline x1='44' y1='50' x2='65' y2='58' stroke='%2300e5a0' stroke-width='2'/%3E%3Crect x='58' y='16' width='8' height='12' rx='2' fill='%235865f2'/%3E%3Crect x='68' y='20' width='8' height='8' rx='2' fill='%23faa61a'/%3E%3Crect x='63' y='53' width='8' height='10' rx='2' fill='%239b84ec'/%3E%3Ctext x='82' y='36' font-family='Arial' font-weight='800' font-size='12' fill='%23e2e4e8'%3ETemay%3C/text%3E%3Ctext x='82' y='50' font-family='Arial' font-weight='800' font-size='12' fill='%2300e5a0'%3EOps%3C/text%3E%3C/svg%3E"
-      width={size}
-      height={size * 0.67}
-      alt="Temay Ops"
-      style={{objectFit:"contain"}}
-    />
-  );
-}
 
-function LogoGD({size=32}){
-  return(
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <rect width="40" height="40" rx="10" fill="#00e5a0"/>
-      <path d="M8 20c0-4.4 3.6-8 8-8h2v3h-2c-2.8 0-5 2.2-5 5s2.2 5 5 5h2v-3h-1v-2h4v7h-5c-4.4 0-8-3.6-8-8z" fill="#000"/>
-      <path d="M32 20c0 4.4-3.6 8-8 8h-2v-3h2c2.8 0 5-2.2 5-5s-2.2-5-5-5h-2v3h1v2h-4v-7h5c4.4 0 8 3.6 8 8z" fill="#000"/>
-    </svg>
-  );
-}
+
+
 
 function LoginPage({onLogin}){
   const [modo,setModo]=React.useState("empresa");
@@ -335,7 +317,7 @@ function LoginPage({onLogin}){
     try{
       if(modo==="master"){
         if(login===MASTER_LOGIN&&senha===MASTER_SENHA){
-          onLogin({id:"master",nome:"Natalia (Master)",perfil:"master",empresa_id:null,empresa_nome:"Temay Ops",minhasEmpresas:[]},null);
+          onLogin({id:"master",nome:"Master HRSystem",perfil:"master",empresa_id:null,empresa_nome:"HRSystem",minhasEmpresas:[]},null);
         }else{setErro("Credenciais Master inválidas.");}
         setLoading(false);return;
       }
@@ -359,7 +341,7 @@ function LoginPage({onLogin}){
     <div className="login-temay">
       <div className="login-temay-bg"/><div className="login-grid-bg"/>
       <div className="login-box">
-        <div className="login-logo-wrap"><LogoTemay size={80}/><div className="login-system-name">Esqueceu a senha?</div></div>
+        <div className="login-logo-wrap"><div className="login-system-name" style={{fontSize:36,fontWeight:900,letterSpacing:"-1px",color:"#fff",fontFamily:"var(--font-head)"}}>HR<span style={{color:"var(--green)"}}>System</span></div><div style={{fontSize:12,color:"var(--text3)",marginTop:4}}>Recuperação de senha</div></div>
         <div style={{textAlign:"center",padding:"10px 0 20px"}}>
           <div style={{fontSize:44,marginBottom:16}}>🔑</div>
           <div style={{fontFamily:"var(--font-head)",fontWeight:700,fontSize:15,color:"var(--text)",marginBottom:10}}>Entre em contato com o administrador</div>
@@ -384,9 +366,9 @@ function LoginPage({onLogin}){
       <div className="login-temay-bg"/><div className="login-grid-bg"/>
       <div className="login-box">
         <div className="login-logo-wrap">
-          <LogoTemay size={90}/>
-          <div className="login-system-name">Temay Ops</div>
-          <div className="login-system-sub">People Analytics · RH</div>
+          <div style={{fontFamily:"var(--font-head)",fontWeight:900,fontSize:42,letterSpacing:"-1px",color:"#fff",textAlign:"center",marginBottom:4}}>HR<span style={{color:"var(--green)"}}>System</span></div>
+          <div className="login-system-name">HRSystem</div>
+          <div className="login-system-sub">Gestão de RH</div>
         </div>
 
         <div style={{display:"flex",gap:6,marginBottom:20,background:"var(--bg3)",borderRadius:"var(--radius-sm)",padding:4}}>
@@ -405,7 +387,7 @@ function LoginPage({onLogin}){
             <div className="login-field">
               <label className="login-label">Sistema</label>
               <div style={{background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",padding:"10px 14px",fontSize:12,color:"var(--green)",fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
-                🏢 Temay Ops · RH Multi-Empresa
+                🏢 HRSystem Multi-Empresa
               </div>
               <div style={{fontSize:10,color:"var(--text3)",marginTop:3}}>Digite seu login e senha para acessar</div>
             </div>
@@ -495,7 +477,7 @@ function MasterDashboard({onEntrarEmpresa,onLogout}){
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <LogoTemay size={44}/>
+            <div style={{fontFamily:"var(--font-head)",fontWeight:900,fontSize:18,letterSpacing:"-0.5px",color:"#fff",lineHeight:1}}>HR<span style={{color:"var(--green)"}}>System</span></div>
           </div>
           <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid var(--border)",fontSize:10,color:"var(--text3)"}}>Painel Master</div>
         </div>
@@ -541,7 +523,7 @@ function MasterDashboard({onEntrarEmpresa,onLogout}){
                         <div className="empresa-card" key={e.id}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
                             <div>
-                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><LogoGD size={26}/></div>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontFamily:"var(--font-head)",fontWeight:900,fontSize:15,color:"#fff",letterSpacing:"-0.5px"}}>HR<span style={{color:"var(--green)"}}>System</span></span></div>
                               <div style={{fontFamily:"var(--font-head)",fontWeight:700,fontSize:14}}>{e.nome}</div>
                               <div style={{fontSize:11,color:"var(--text3)",marginTop:2}}>Código: <strong style={{color:"var(--green)"}}>{e.codigo}</strong></div>
                             </div>
@@ -726,10 +708,10 @@ function SistemaEmpresa({user,onLogout}){
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-            <LogoGD size={30}/>
+            <div style={{fontFamily:"var(--font-head)",fontWeight:900,fontSize:16,letterSpacing:"-0.5px",color:"#fff",lineHeight:1}}>HR<span style={{color:"var(--green)"}}>S</span></div>
             <div>
-              <div style={{fontFamily:"var(--font-head)",fontWeight:800,fontSize:11,color:"var(--text)",lineHeight:1.2}}>Temay Ops · RH</div>
-              <div style={{fontSize:9,color:"var(--green)",fontWeight:500,letterSpacing:".04em",marginTop:1}}>People Analytics</div>
+              <div style={{fontFamily:"var(--font-head)",fontWeight:800,fontSize:11,color:"var(--text)",lineHeight:1.2}}>HRSystem</div>
+              <div style={{fontSize:9,color:"var(--green)",fontWeight:500,letterSpacing:".04em",marginTop:1}}>Gestão de RH</div>
             </div>
           </div>
           {minhasEmpresas.length>1?(
@@ -1396,7 +1378,7 @@ function UsuariosEmp({empresaId,user,minhasEmpresas}){
             <div className="modal-header"><span className="modal-title">👤 Novo Usuário</span><button className="modal-close" onClick={()=>setModal(false)}>×</button></div>
             <div className="form-row"><div className="form-group"><label className="form-label">Nome <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div><div className="form-group"><label className="form-label">E-mail</label><input className="form-input" type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div></div>
             <div className="form-row"><div className="form-group"><label className="form-label">Login <span style={{color:"var(--red)"}}>*</span></label><input className="form-input" value={form.login} onChange={e=>setForm(f=>({...f,login:e.target.value.toLowerCase()}))} placeholder="Ex: joao.silva"/><div className="form-hint">Sem espaços, letras minúsculas</div></div><div className="form-group"><label className="form-label">Perfil</label><select className="form-input" value={form.perfil} onChange={e=>setForm(f=>({...f,perfil:e.target.value}))}><option value="admin">Administrador</option><option value="coordenador">Coordenador RH</option><option value="assistente">Assistente RH</option><option value="auxiliar">Auxiliar RH</option></select></div></div>
-            <div className="form-group"><label className="form-label">Senha inicial</label><input className="form-input" value={form.senha_hash} onChange={e=>setForm(f=>({...f,senha_hash:e.target.value}))}/><div className="form-hint">Padrão: Temay@2025 — o usuário pode trocar depois</div></div>
+            <div className="form-group"><label className="form-label">Senha inicial</label><input className="form-input" value={form.senha_hash} onChange={e=>setForm(f=>({...f,senha_hash:e.target.value}))}/><div className="form-hint">Senha padrão — o usuário pode trocar depois</div></div>
             <div className="modal-actions"><button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button><button className="btn btn-primary" onClick={salvar} disabled={!form.nome||!form.login}>Criar Usuário</button></div>
           </div>
         </div>

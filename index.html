@@ -1602,12 +1602,16 @@ function ContratacaoModal({candidato,empresaId,onFechar}){
     setDocumentos(d=>d.filter(x=>x.id!==docId));
   };
 
-  const FField=({label,name,type="text",placeholder,full})=>(
-    <div className="form-group" style={full?{gridColumn:"1/-1"}:{}}>
-      <label className="form-label">{label}</label>
-      <input className="form-input" type={type} name={name} value={form[name]||""} onChange={e=>set(name,e.target.value)} placeholder={placeholder||""}/>
-    </div>
-  );
+  const FField=({label,name,type="text",placeholder,full})=>{
+    const extraProps={};
+    if(type==="date"){extraProps.min="1900-01-01";extraProps.max="2099-12-31";}
+    return(
+      <div className="form-group" style={full?{gridColumn:"1/-1"}:{}}>
+        <label className="form-label">{label}</label>
+        <input className="form-input" type={type} name={name} id={`field-${name}`} value={form[name]||""} onChange={e=>set(name,e.target.value)} placeholder={placeholder||""} {...extraProps} autoComplete="off"/>
+      </div>
+    );
+  };
 
   return(
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onFechar()}>

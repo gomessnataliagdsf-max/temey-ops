@@ -629,8 +629,9 @@ function SistemaEmpresa({ user, onLogout }) {
   const [page, setPage] = React.useState("dashboard");
   const [data, setData] = React.useState({ candidatos: [], vagas: [] });
   const [loading, setLoading] = React.useState(true);
-  // Origens agora vêm do Supabase
   const [origens, setOrigens] = React.useState([]);
+  const [allEmpresas, setAllEmpresas] = React.useState([]);
+  const [allUsuarios, setAllUsuarios] = React.useState([]);
   const isMasterVisit = user.perfil === "master";
   const minhasEmpresas = user.minhasEmpresas || [];
   const [empresaAtiva, setEmpresaAtiva] = React.useState(user.empresa_id);
@@ -643,13 +644,17 @@ function SistemaEmpresa({ user, onLogout }) {
       try {
         if (!empId) { setLoading(false); return; }
         const filtroEmp = `&empresa_id=eq.${empId}`;
-        const [c, v, o] = await Promise.all([
+        const [c, v, o, emps, usrs] = await Promise.all([
           db.get("candidatos", filtroEmp),
           db.get("vagas", filtroEmp),
-          origensService.listar(empId)   // ← ORIGENS DO SUPABASE
+          origensService.listar(empId),
+          db.get("empresas", "&ativa=eq.true"),
+          db.get("sistema_usuarios", "")
         ]);
         setData({ candidatos: Array.isArray(c) ? c : [], vagas: Array.isArray(v) ? v : [] });
         setOrigens(o);
+        setAllEmpresas(Array.isArray(emps) ? emps : []);
+        setAllUsuarios(Array.isArray(usrs) ? usrs : []);
       } catch (e) { console.error(e); }
       setLoading(false);
     }; load();
@@ -751,7 +756,7 @@ function SistemaEmpresa({ user, onLogout }) {
               {page === "candidatos" && <CandidatosEmp data={{ ...data, candidatos: meusCandidatos, vagas: minhasVagas }} setData={setData} user={user} empresaId={empId} origens={origens} podeVerTudo={podeVerTudo}/>}
               {page === "vagas" && (podeEditarVagas ? <VagasEmp data={{ ...data, vagas: minhasVagas }} setData={setData} empresaId={empId} user={user}/> : <AccessDenied/>)}
               {page === "agenda" && <AgendaEmp data={{ ...data, candidatos: meusCandidatos }}/>}
-              {page === "pipeline" && <PipelineEmp data={{ ...data, candidatos: meusCandidatos }} setData={setData}/>}
+              {page === "pipeline" && <PipelineEmp data={{ ...data, candidatos: meusCandidatos }} setData={setData} empresaId={empId} allUsuarios={allUsuarios} allEmpresas={allEmpresas}/>}
               {page === "contratacao" && <ContratacaoEmp data={data} setData={setData} empresaId={empId} user={user}/>}
               {page === "usuarios" && (podeCriarUsuarios ? <UsuariosEmp empresaId={empId} user={user} minhasEmpresas={minhasEmpresas}/> : <AccessDenied/>)}
               {page === "origens" && (podeEditarOrigens ? <OrigensEmp origens={origens} setOrigens={setOrigens} empresaId={empId}/> : <AccessDenied/>)}
@@ -1180,31 +1185,234 @@ function AgendaEmp({ data }) {
 // ============================================================
 // PIPELINE
 // ============================================================
-function PipelineEmp({ data, setData }) {
-  const cols = ["Novo","Em Entrevista","Aprovado","Reprovado","Contratado","Desistente"];
-  const colC = { "Novo": "#9ea3ad", "Em Entrevista": "#faa61a", "Aprovado": "#9f7aea", "Reprovado": "#f04747", "Contratado": "#5865f2", "Desistente": "#9b84ec" };
-  const mover = async (c, s) => { await db.patch("candidatos", c.id, { status: s }); setData(d => ({ ...d, candidatos: d.candidatos.map(x => x.id === c.id ? { ...x, status: s } : x) })); };
+// ============================================================
+// PIPELINE — etapas dinâmicas + migrar empresa/recrutador
+// ============================================================
+const ETAPAS_FIXAS = [
+  { nome: "Novo",          cor: "#9ea3ad" },
+  { nome: "Em Entrevista", cor: "#faa61a" },
+  { nome: "Aprovado",      cor: "#9f7aea" },
+  { nome: "Reprovado",     cor: "#f04747" },
+  { nome: "Contratado",    cor: "#5865f2" },
+  { nome: "Desistente",    cor: "#9b84ec" },
+];
+const COR_CUSTOM = "#10d9a0";
+
+function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
+  // Etapas customizadas salvas no Supabase (tabela pipeline_etapas)
+  const [etapasCustom, setEtapasCustom] = React.useState([]);
+  const [novaEtapa, setNovaEtapa] = React.useState("");
+  const [salvandoEtapa, setSalvandoEtapa] = React.useState(false);
+  // Modal migração
+  const [modalMigrar, setModalMigrar] = React.useState(null); // candidato selecionado
+  const [migrarEmpresa, setMigrarEmpresa] = React.useState("");
+  const [migrarRecrutador, setMigrarRecrutador] = React.useState("");
+  const [salvandoMigrar, setSalvandoMigrar] = React.useState(false);
+  const [msgMigrar, setMsgMigrar] = React.useState("");
+
+  React.useEffect(() => {
+    fetch(`${SB_URL}/rest/v1/pipeline_etapas?select=*&order=created_at.asc`, {
+      headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
+    }).then(r => r.json()).then(d => { if (Array.isArray(d)) setEtapasCustom(d); }).catch(() => {});
+  }, []);
+
+  // Todas as etapas: fixas + customizadas
+  const todasEtapas = [
+    ...ETAPAS_FIXAS,
+    ...etapasCustom.map(e => ({ nome: e.nome, cor: COR_CUSTOM, id: e.id, custom: true }))
+  ];
+  const todosNomes = todasEtapas.map(e => e.nome);
+
+  const mover = async (c, novoStatus) => {
+    await db.patch("candidatos", c.id, { status: novoStatus });
+    setData(d => ({ ...d, candidatos: d.candidatos.map(x => x.id === c.id ? { ...x, status: novoStatus } : x) }));
+  };
+
+  const criarEtapa = async () => {
+    const nome = novaEtapa.trim();
+    if (!nome) return;
+    if (todosNomes.includes(nome)) { alert("Já existe uma etapa com esse nome."); return; }
+    setSalvandoEtapa(true);
+    const r = await fetch(`${SB_URL}/rest/v1/pipeline_etapas`, {
+      method: "POST",
+      headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
+      body: JSON.stringify({ nome, empresa_id: empresaId || null })
+    }).then(r => r.json());
+    if (Array.isArray(r) && r[0]) setEtapasCustom(prev => [...prev, r[0]]);
+    setNovaEtapa("");
+    setSalvandoEtapa(false);
+  };
+
+  const excluirEtapa = async (etapa) => {
+    const candidatosNaEtapa = data.candidatos.filter(c => c.status === etapa.nome);
+    if (candidatosNaEtapa.length > 0) { alert(`Mova os ${candidatosNaEtapa.length} candidato(s) desta etapa antes de excluí-la.`); return; }
+    if (!confirm(`Excluir etapa "${etapa.nome}"?`)) return;
+    await fetch(`${SB_URL}/rest/v1/pipeline_etapas?id=eq.${etapa.id}`, {
+      method: "DELETE", headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
+    });
+    setEtapasCustom(prev => prev.filter(e => e.id !== etapa.id));
+  };
+
+  const abrirMigrar = (candidato) => {
+    setModalMigrar(candidato);
+    setMigrarEmpresa(candidato.empresa_id || "");
+    setMigrarRecrutador(candidato.recrutador || "");
+    setMsgMigrar("");
+  };
+
+  const salvarMigracao = async () => {
+    if (!modalMigrar) return;
+    setSalvandoMigrar(true);
+    const patch = {};
+    if (migrarEmpresa && migrarEmpresa !== modalMigrar.empresa_id) patch.empresa_id = migrarEmpresa;
+    if (migrarRecrutador !== modalMigrar.recrutador) patch.recrutador = migrarRecrutador;
+    if (Object.keys(patch).length === 0) { setMsgMigrar("Nenhuma alteração feita."); setSalvandoMigrar(false); return; }
+    await db.patch("candidatos", modalMigrar.id, patch);
+    setData(d => ({ ...d, candidatos: d.candidatos.map(c => c.id === modalMigrar.id ? { ...c, ...patch } : c) }));
+    setMsgMigrar("✅ Candidato migrado com sucesso!");
+    setTimeout(() => { setModalMigrar(null); setMsgMigrar(""); }, 1500);
+    setSalvandoMigrar(false);
+  };
+
+  const recrutadoresList = allUsuarios ? allUsuarios.map(u => u.nome).filter(Boolean) : [];
+
   return (
     <>
-      <div className="page-header"><div className="page-title">Pipeline</div></div>
-      <div className="kanban">{cols.map(etapa => {
-        const items = data.candidatos.filter(c => c.status === etapa);
-        const cor = colC[etapa];
-        return (
-          <div className="kanban-col" key={etapa}>
-            <div className="kanban-header" style={{ background: `${cor}18` }}><span style={{ fontSize: 12, fontWeight: 700, color: cor }}>{etapa}</span><span className="kanban-count" style={{ color: cor }}>{items.length}</span></div>
-            {items.map(c => (
-              <div className="kanban-item" key={c.id}>
-                <div className="flex-center" style={{ marginBottom: 5 }}><div className="avatar-sm" style={{ width: 22, height: 22, fontSize: 8 }}>{ini(c.nome)}</div><div style={{ fontSize: 12, fontWeight: 600 }}>{c.nome}</div></div>
-                <div style={{ fontSize: 11, color: "var(--text2)", marginBottom: 4 }}>{c.vaga}</div>
-                {c.recrutador && <div style={{ fontSize: 10, color: "var(--text3)", marginBottom: 6 }}>👤 {c.recrutador}</div>}
-                <select style={{ width: "100%", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--text2)", fontSize: 10, padding: "5px 7px", outline: "none", cursor: "pointer", fontFamily: "'Inter',sans-serif" }} value={etapa} onChange={e => mover(c, e.target.value)}>{cols.map(col => <option key={col}>{col}</option>)}</select>
+      <div className="page-header">
+        <div><div className="page-title">Pipeline</div><div className="page-subtitle">{todasEtapas.length} etapas · arraste ou use o menu</div></div>
+      </div>
+
+      {/* Adicionar nova etapa */}
+      <div className="filter-section" style={{ marginBottom: 18 }}>
+        <div className="filter-title">➕ Nova Etapa Customizada</div>
+        <div className="filter-row">
+          <input
+            className="filter-input"
+            placeholder="Ex: Teste Técnico, Dinâmica de Grupo..."
+            value={novaEtapa}
+            onChange={e => setNovaEtapa(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && criarEtapa()}
+            disabled={salvandoEtapa}
+            style={{ maxWidth: 340 }}
+          />
+          <button className="btn btn-primary" onClick={criarEtapa} disabled={!novaEtapa.trim() || salvandoEtapa}>
+            <I d={IC.plus} s={13}/>{salvandoEtapa ? "Salvando..." : "Criar Etapa"}
+          </button>
+          {etapasCustom.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              {etapasCustom.map(e => (
+                <span key={e.id} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: `${COR_CUSTOM}20`, color: COR_CUSTOM, border: `1px solid ${COR_CUSTOM}40`, borderRadius: 20, padding: "3px 10px", fontSize: 11, fontWeight: 600 }}>
+                  {e.nome}
+                  <button onClick={() => excluirEtapa(e)} style={{ background: "none", border: "none", color: COR_CUSTOM, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Kanban */}
+      <div className="kanban">
+        {todasEtapas.map(etapa => {
+          const items = data.candidatos.filter(c => c.status === etapa.nome);
+          const cor = etapa.cor;
+          return (
+            <div className="kanban-col" key={etapa.nome}>
+              <div className="kanban-header" style={{ background: `${cor}18` }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: cor }}>{etapa.nome}</span>
+                <span className="kanban-count" style={{ color: cor }}>{items.length}</span>
               </div>
-            ))}
-            {items.length === 0 && <div style={{ padding: "14px 8px", textAlign: "center", color: "var(--text3)", fontSize: 11, borderRadius: "var(--radius-sm)", border: "1px dashed var(--border)" }}>Vazio</div>}
+              {items.map(c => (
+                <div className="kanban-item" key={c.id}>
+                  <div className="flex-center" style={{ marginBottom: 5 }}>
+                    <div className="avatar-sm" style={{ width: 22, height: 22, fontSize: 8 }}>{ini(c.nome)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>{c.nome}</div>
+                    <button
+                      title="Migrar empresa / recrutador"
+                      onClick={() => abrirMigrar(c)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", fontSize: 14, padding: "0 2px", flexShrink: 0 }}>⇄</button>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--text2)", marginBottom: 4 }}>{c.vaga}</div>
+                  {c.recrutador && <div style={{ fontSize: 10, color: "var(--text3)", marginBottom: 6 }}>👤 {c.recrutador}</div>}
+                  <select
+                    style={{ width: "100%", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", color: "var(--text2)", fontSize: 10, padding: "5px 7px", outline: "none", cursor: "pointer", fontFamily: "'Inter',sans-serif" }}
+                    value={etapa.nome}
+                    onChange={e => mover(c, e.target.value)}
+                  >
+                    {todosNomes.map(col => <option key={col}>{col}</option>)}
+                  </select>
+                </div>
+              ))}
+              {items.length === 0 && <div style={{ padding: "14px 8px", textAlign: "center", color: "var(--text3)", fontSize: 11, borderRadius: "var(--radius-sm)", border: "1px dashed var(--border)" }}>Vazio</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal migração de empresa / recrutador */}
+      {modalMigrar && (
+        <div className="modal-overlay" onClick={() => setModalMigrar(null)}>
+          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">⇄ Migrar Candidato</span>
+              <button className="modal-close" onClick={() => setModalMigrar(null)}>×</button>
+            </div>
+            <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 14px", marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, fontSize: 13 }}>{modalMigrar.nome}</div>
+              <div style={{ fontSize: 11, color: "var(--text2)", marginTop: 2 }}>{modalMigrar.vaga} · Rec: {modalMigrar.recrutador || "—"}</div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Migrar para Empresa</label>
+              <select
+                className="form-input"
+                value={migrarEmpresa}
+                onChange={e => setMigrarEmpresa(e.target.value)}
+              >
+                <option value="">— manter empresa atual —</option>
+                {(allEmpresas || []).map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.nome}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Transferir para Recrutador</label>
+              <select
+                className="form-input"
+                value={migrarRecrutador}
+                onChange={e => setMigrarRecrutador(e.target.value)}
+              >
+                <option value="">— manter recrutador atual —</option>
+                {recrutadoresList.map(nome => (
+                  <option key={nome} value={nome}>{nome}</option>
+                ))}
+              </select>
+              <div className="form-hint">Ou digite manualmente:</div>
+              <input
+                className="form-input"
+                style={{ marginTop: 6 }}
+                value={migrarRecrutador}
+                onChange={e => setMigrarRecrutador(e.target.value)}
+                placeholder="Nome do recrutador"
+              />
+            </div>
+
+            {msgMigrar && (
+              <div style={{ background: msgMigrar.includes("✅") ? "rgba(159,122,234,0.1)" : "rgba(255,77,106,0.1)", border: `1px solid ${msgMigrar.includes("✅") ? "rgba(159,122,234,0.3)" : "rgba(255,77,106,0.3)"}`, borderRadius: "var(--radius-sm)", padding: "8px 12px", fontSize: 12, color: msgMigrar.includes("✅") ? "var(--green)" : "var(--red)", marginBottom: 10 }}>
+                {msgMigrar}
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button className="btn btn-ghost" onClick={() => setModalMigrar(null)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={salvarMigracao} disabled={salvandoMigrar}>
+                {salvandoMigrar ? "Salvando..." : "✓ Confirmar Migração"}
+              </button>
+            </div>
           </div>
-        );
-      })}</div>
+        </div>
+      )}
     </>
   );
 }
@@ -1272,12 +1480,43 @@ function ContratacaoEmp({ data, setData, empresaId, user }) {
 }
 
 // ============================================================
-// MODAL CONTRATAÇÃO — carregamento e salvamento reais
+// Campo de formulário — definido FORA do componente modal
+// (se definido dentro, React recria o elemento a cada render
+//  causando perda de foco ao digitar — esse era o bug)
+// ============================================================
+function CampoContratacao({ label, name, type, placeholder, span2, form, onChange }) {
+  return (
+    <div className="form-group" style={span2 ? { gridColumn: "1/-1" } : {}}>
+      <label className="form-label">{label}</label>
+      {type === "textarea" ? (
+        <textarea
+          className="form-textarea"
+          name={name}
+          value={form[name] || ""}
+          onChange={onChange}
+          placeholder={placeholder || ""}
+        />
+      ) : (
+        <input
+          className="form-input"
+          type={type || "text"}
+          name={name}
+          value={form[name] || ""}
+          onChange={onChange}
+          placeholder={placeholder || ""}
+          autoComplete="off"
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// MODAL CONTRATAÇÃO — campos funcionais, carregamento real
 // ============================================================
 function ContratacaoModal({ candidato, empresaId, onFechar }) {
   const SB_BUCKET = "documentos-contratacao";
 
-  // Estado do formulário — todos os campos controlados
   const FORM_VAZIO = {
     data_nascimento: "", rg: "", cpf: "", pis: "", pix: "",
     nome_responsavel: "", grau_parentesco: "",
@@ -1295,7 +1534,6 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
   const [contratacaoId, setContratacaoId] = React.useState(null);
   const fileInputRef = React.useRef();
 
-  // Carrega dados existentes do Supabase
   React.useEffect(() => {
     document.body.style.overflow = "hidden";
     const load = async () => {
@@ -1304,7 +1542,6 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
       if (existente) {
         setContratacaoId(existente.id);
         setDocumentos(existente.documentos || []);
-        // Preenche o formulário com os dados salvos
         setForm({
           data_nascimento: existente.data_nascimento || "",
           rg: existente.rg || "",
@@ -1329,11 +1566,11 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
     return () => { document.body.style.overflow = ""; };
   }, [candidato.id]);
 
-  // Handler genérico — funciona para qualquer input/select/textarea
-  const handleChange = (e) => {
+  // Handler genérico — atualiza qualquer campo pelo name=
+  const handleChange = React.useCallback((e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
@@ -1379,17 +1616,8 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
     setDocumentos(d => d.filter(x => x.id !== docId));
   };
 
-  // Campo reutilizável com name= controlado
-  const Campo = ({ label, name, type = "text", placeholder, span2 }) => (
-    <div className="form-group" style={span2 ? { gridColumn: "1/-1" } : {}}>
-      <label className="form-label">{label}</label>
-      {type === "textarea" ? (
-        <textarea className="form-textarea" name={name} value={form[name] || ""} onChange={handleChange} placeholder={placeholder || ""}/>
-      ) : (
-        <input className="form-input" type={type} name={name} value={form[name] || ""} onChange={handleChange} placeholder={placeholder || ""} autoComplete="off"/>
-      )}
-    </div>
-  );
+  // Atalho local que já passa form + onChange para o componente externo
+  const Campo = (props) => <CampoContratacao {...props} form={form} onChange={handleChange} />;
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onFechar()}>

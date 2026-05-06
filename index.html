@@ -693,9 +693,9 @@ function SistemaEmpresa({ user, onLogout }) {
   const tema = getEmpresaTema(empresaAtivaObj?.nome);
 
   const temaStyle = tema ? {
-    "--bg": tema.bg, "--bg2": tema.bgCard, "--bg3": "#f1f5f9", "--bg4": "#e2e8f0",
+    "--bg": tema.bg, "--bg2": tema.bgCard, "--bg3": tema.bg3 || "#2a2f3a", "--bg4": "#333845",
     "--border": tema.border, "--green": tema.primary, "--green2": tema.primaryDark,
-    "--green-dim": tema.primaryLight, "--green-dim2": tema.primaryLight + "80",
+    "--green-dim": tema.primaryLight, "--green-dim2": tema.primaryLight,
     "--text": tema.text, "--text2": tema.text2, "--text3": tema.text3,
   } : {};
 
@@ -1430,20 +1430,32 @@ function AgendaEmp({ data }) {
 function getEmpresaTema(nomeEmpresa) {
   const n = (nomeEmpresa || "").toUpperCase();
   if (n.includes("GRUPO DIGITAL")) return {
-    primary: "#22c55e", primaryDark: "#16a34a", primaryLight: "#dcfce7",
-    bg: "#ffffff", bgCard: "#f9fafb", bgSidebar: "#f0fdf4",
-    border: "#bbf7d0", text: "#111827", text2: "#374151", text3: "#6b7280",
-    badge: "#16a34a", badgeBg: "#dcfce7",
+    // Fundo escuro, sidebar VERDE, detalhes verdes
+    primary: "#22c55e", primaryDark: "#16a34a", primaryLight: "rgba(34,197,94,0.12)",
+    bg: "#1a1d23",        // fundo principal escuro (igual ao padrão)
+    bgCard: "#21252e",    // cards escuros
+    bg3: "#2a2f3a",
+    bgSidebar: "#14532d", // sidebar VERDE escuro
+    sidebarText: "#bbf7d0",
+    sidebarTextActive: "#ffffff",
+    border: "rgba(34,197,94,0.25)",
+    text: "#e8eaf0", text2: "#a7f3c0", text3: "#4a5168",
     name: "grupo-digital"
   };
   if (n.includes("NEWCORBAN")) return {
-    primary: "#1e3a5f", primaryDark: "#0f2340", primaryLight: "#dbeafe",
-    bg: "#ffffff", bgCard: "#f8fafc", bgSidebar: "#eff6ff",
-    border: "#bfdbfe", text: "#0f172a", text2: "#1e3a5f", text3: "#64748b",
-    badge: "#1e3a5f", badgeBg: "#dbeafe",
+    // Fundo cinza escuro, sidebar AZUL ESCURO
+    primary: "#3b82f6", primaryDark: "#1d4ed8", primaryLight: "rgba(59,130,246,0.12)",
+    bg: "#0f172a",        // fundo principal azul-escuro quase preto
+    bgCard: "#1e293b",    // cards cinza-escuro
+    bg3: "#2d3748",
+    bgSidebar: "#0f2340", // sidebar AZUL ESCURO
+    sidebarText: "#bfdbfe",
+    sidebarTextActive: "#ffffff",
+    border: "rgba(59,130,246,0.25)",
+    text: "#e8eaf0", text2: "#93c5fd", text3: "#475569",
     name: "newcorban"
   };
-  return null; // usa o tema dark padrão
+  return null;
 }
 
 const ETAPAS_FIXAS = [
@@ -1779,7 +1791,10 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
     data_nascimento: "", rg: "", cpf: "", pis: "", pix: "",
     nome_responsavel: "", grau_parentesco: "",
     rg_responsavel: "", cpf_responsavel: "", email_responsavel: "",
-    data_inicio: "", remuneracao: "", beneficios: "", unidade: "", equipe: ""
+    data_inicio: "", remuneracao: "", beneficios: "", unidade: "", equipe: "",
+    // Documento estrangeiro
+    is_estrangeiro: false,
+    passaporte: "", pais_origem: "", rne: "", visto_tipo: "", visto_validade: "",
   };
 
   const [form, setForm] = React.useState(FORM_VAZIO);
@@ -1816,6 +1831,12 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
           beneficios: existente.beneficios || "",
           unidade: existente.unidade || "",
           equipe: existente.equipe || "",
+          is_estrangeiro: existente.is_estrangeiro || false,
+          passaporte: existente.passaporte || "",
+          pais_origem: existente.pais_origem || "",
+          rne: existente.rne || "",
+          visto_tipo: existente.visto_tipo || "",
+          visto_validade: existente.visto_validade || "",
         });
       }
       setLoading(false);
@@ -1918,6 +1939,31 @@ function ContratacaoModal({ candidato, empresaId, onFechar }) {
                 <CampoContratacao form={form} onChange={handleChange} label="Nome do Responsável" name="nome_responsavel" placeholder="Nome completo"/>
                 <CampoContratacao form={form} onChange={handleChange} label="Grau de Parentesco" name="grau_parentesco" placeholder="Ex: Mãe, Pai, Cônjuge..."/>
               </div>
+
+              {/* Documento Estrangeiro */}
+              <div className="modal-section">🌍 Documento Estrangeiro</div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "10px 14px", background: form.is_estrangeiro ? "rgba(159,122,234,0.1)" : "var(--bg3)", border: `1px solid ${form.is_estrangeiro ? "var(--green)" : "var(--border)"}`, borderRadius: "var(--radius-sm)", transition: "all .15s" }}>
+                  <input
+                    type="checkbox"
+                    name="is_estrangeiro"
+                    checked={form.is_estrangeiro || false}
+                    onChange={e => handleChange({ target: { name: "is_estrangeiro", value: e.target.checked } })}
+                    style={{ width: 16, height: 16, accentColor: "var(--green)", cursor: "pointer" }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>Candidato estrangeiro</span>
+                  <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 4 }}>— preencha os campos abaixo se aplicável</span>
+                </label>
+              </div>
+              {form.is_estrangeiro && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, padding: "14px", background: "rgba(159,122,234,0.06)", border: "1px solid rgba(159,122,234,0.2)", borderRadius: "var(--radius-sm)", marginBottom: 12 }}>
+                  <CampoContratacao form={form} onChange={handleChange} label="Passaporte" name="passaporte" placeholder="Ex: AB123456"/>
+                  <CampoContratacao form={form} onChange={handleChange} label="País de Origem" name="pais_origem" placeholder="Ex: Argentina, Portugal..."/>
+                  <CampoContratacao form={form} onChange={handleChange} label="RNE / CRNM" name="rne" placeholder="Registro Nacional de Estrangeiro"/>
+                  <CampoContratacao form={form} onChange={handleChange} label="Tipo de Visto" name="visto_tipo" placeholder="Ex: Trabalho, Permanente, MERCOSUL..."/>
+                  <CampoContratacao form={form} onChange={handleChange} label="Validade do Visto" name="visto_validade" type="date"/>
+                </div>
+              )}
 
               {/* Dados responsável */}
               <div className="modal-section">👨‍👩‍👧 Dados do Responsável</div>

@@ -1602,10 +1602,20 @@ function getEmpresaTema(nomeEmpresa) {
 // ============================================================
 // CONTEXT GLOBAL — etapas do pipeline compartilhadas
 // ============================================================
+const ETAPAS_FIXAS = [
+  { nome: "Novo",          cor: "#9ea3ad" },
+  { nome: "Em Entrevista", cor: "#faa61a" },
+  { nome: "Aprovado",      cor: "#9f7aea" },
+  { nome: "Reprovado",     cor: "#f04747" },
+  { nome: "Contratado",    cor: "#5865f2" },
+  { nome: "Desistente",    cor: "#9b84ec" },
+];
+const COR_CUSTOM = "#10d9a0";
+
 const EtapasContext = React.createContext({ etapasCustom: [], todosStatus: [] });
 
 function EtapasProvider({ empresaId, children }) {
-  const { etapasCustom, setEtapasCustom, todosStatus } = React.useContext(EtapasContext);
+  const [etapasCustom, setEtapasCustom] = React.useState([]);
 
   React.useEffect(() => {
     if (!empresaId) return;
@@ -1626,15 +1636,7 @@ function EtapasProvider({ empresaId, children }) {
   );
 }
 
-const ETAPAS_FIXAS = [
-  { nome: "Novo",          cor: "#9ea3ad" },
-  { nome: "Em Entrevista", cor: "#faa61a" },
-  { nome: "Aprovado",      cor: "#9f7aea" },
-  { nome: "Reprovado",     cor: "#f04747" },
-  { nome: "Contratado",    cor: "#5865f2" },
-  { nome: "Desistente",    cor: "#9b84ec" },
-];
-const COR_CUSTOM = "#10d9a0";
+
 
 function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
   // Etapas customizadas salvas no Supabase (tabela pipeline_etapas)

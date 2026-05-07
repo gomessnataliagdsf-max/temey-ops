@@ -2508,7 +2508,7 @@ function App() {
   return <SistemaEmpresa user={user} onLogout={handleLogout}/>;
 }
 
-ReactDOM.render(React.createElement(App), document.getElementById('root'));
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>
 </body>
 </html>

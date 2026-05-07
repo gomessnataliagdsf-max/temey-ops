@@ -700,6 +700,7 @@ function SistemaEmpresa({ user, onLogout }) {
   } : {};
 
   return (
+    <EtapasProvider empresaId={empId}>
     <div className="app" style={temaStyle}>
       <aside className="sidebar" style={tema ? { background: tema.bgSidebar, borderRight: `1px solid ${tema.border}` } : {}}>
         <div className="sidebar-logo">
@@ -779,6 +780,7 @@ function SistemaEmpresa({ user, onLogout }) {
         </main>
       </div>
     </div>
+    </EtapasProvider>
   );
 }
 
@@ -798,7 +800,8 @@ function DashboardEmp({ data, origens }) {
   const recrutadores = [...new Set(data.candidatos.map(c => c.recrutador).filter(Boolean))];
   const vagasU = [...new Set(data.candidatos.map(c => c.vaga).filter(Boolean))];
   const nomesOrigens = origens.map(o => o.nome || o);
-  const statusOpts = ["Novo","Em Entrevista","Aprovado","Reprovado","Contratado","Desistente"];
+  const { todosStatus } = React.useContext(EtapasContext);
+  const statusOpts = todosStatus.length > 0 ? todosStatus : ["Novo","Em Entrevista","Aprovado","Reprovado","Contratado","Desistente"];
 
   const filtrados = data.candidatos.filter(c => {
     const dOk = (!f1 || c.data >= f1) && (!f2 || c.data <= f2);
@@ -875,109 +878,217 @@ function DashboardEmp({ data, origens }) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const hoje2 = new Date().toLocaleDateString("pt-BR");
-    const W = 210; let y = 20;
+    const W = 210;
+    let y = 0;
 
-    // Header
-    doc.setFillColor(31, 35, 46);
-    doc.rect(0, 0, W, 30, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20); doc.setFont("helvetica", "bold");
-    doc.text("HRSystem", 14, 18);
-    doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.text(`Relatório Dashboard · ${hoje2}`, 14, 26);
-    doc.setTextColor(159, 122, 234);
-    doc.text(`${total} candidatos`, W - 14, 22, { align: "right" });
-    y = 42;
+    // ── HEADER ──
+    doc.setFillColor(26, 29, 35);
+    doc.rect(0, 0, W, 34, "F");
+    doc.setFillColor(159, 122, 234);
+    doc.rect(0, 0, 4, 34, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold"); doc.setFontSize(22);
+    doc.text("HR", 14, 22);
+    doc.setTextColor(159,122,234);
+    doc.text("System", 28, 22);
+    doc.setTextColor(200,200,200); doc.setFont("helvetica","normal"); doc.setFontSize(9);
+    doc.text("Relatório de Recrutamento", 14, 30);
+    doc.setTextColor(159,122,234); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+    doc.text(hoje2, W-14, 22, { align:"right" });
+    doc.setTextColor(200,200,200); doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.text("Confidencial — uso interno", W-14, 30, { align:"right" });
+    y = 44;
 
-    // Filtros ativos
+    // ── FILTROS ──
     if (temF) {
-      doc.setFontSize(8); doc.setTextColor(100, 100, 100);
+      doc.setFillColor(42,47,58); doc.rect(14, y-4, W-28, 8, "F");
+      doc.setTextColor(159,122,234); doc.setFontSize(7); doc.setFont("helvetica","bold");
+      doc.text("FILTROS ATIVOS", 17, y+0.5);
       const filtrosTxt = [
-        f1 && `De: ${f1}`, f2 && `Até: ${f2}`,
-        fRec !== "Todos" && `Rec: ${fRec}`, fOrig !== "Todas" && `Origem: ${fOrig}`,
-        fVaga !== "Todas" && `Vaga: ${fVaga}`, fPipeline !== "Todos" && `Status: ${fPipeline}`,
-      ].filter(Boolean).join("  |  ");
-      doc.text(`Filtros: ${filtrosTxt}`, 14, y); y += 8;
+        f1&&`De: ${f1}`, f2&&`Até: ${f2}`, fRec!=="Todos"&&`Rec: ${fRec}`,
+        fOrig!=="Todas"&&`Origem: ${fOrig}`, fVaga!=="Todas"&&`Vaga: ${fVaga}`,
+        fPipeline!=="Todos"&&`Status: ${fPipeline}`
+      ].filter(Boolean).join("  ·  ");
+      doc.setTextColor(200,200,200); doc.setFont("helvetica","normal");
+      doc.text(filtrosTxt, 55, y+0.5);
+      y += 12;
     }
 
-    // KPIs
+    // ── KPIs ──
     const kpis = [
-      { l: "Total Candidatos", v: String(total) },
-      { l: "Vagas Abertas", v: String(vagasAb.length) },
-      { l: "Entrevistas Hoje", v: String(entHoje.length) },
-      { l: "Taxa Aprovação", v: `${taxa}%` },
+      { l:"Total Candidatos", v:String(total), cor:[159,122,234] },
+      { l:"Vagas Abertas", v:String(vagasAb.length), cor:[91,108,249] },
+      { l:"Entrevistas Hoje", v:String(entHoje.length), cor:[159,122,234] },
+      { l:"Taxa Aprovação", v:`${taxa}%`, cor:[12,179,134] },
     ];
-    const kW = (W - 28) / 4;
-    kpis.forEach((k, i) => {
-      const x = 14 + i * (kW + 3);
-      doc.setFillColor(42, 47, 58);
-      doc.roundedRect(x, y, kW, 20, 2, 2, "F");
-      doc.setTextColor(159, 122, 234); doc.setFontSize(16); doc.setFont("helvetica", "bold");
-      doc.text(k.v, x + kW/2, y + 13, { align: "center" });
-      doc.setTextColor(140, 146, 165); doc.setFontSize(7); doc.setFont("helvetica", "normal");
-      doc.text(k.l, x + kW/2, y + 18, { align: "center" });
+    const kW = (W-32)/4;
+    kpis.forEach((k,i) => {
+      const x = 14 + i*(kW+3);
+      doc.setFillColor(33,37,46); doc.roundedRect(x, y, kW, 22, 3, 3, "F");
+      doc.setFillColor(...k.cor);
+      doc.roundedRect(x, y, kW, 3, 1, 1, "F");
+      doc.setTextColor(...k.cor); doc.setFont("helvetica","bold"); doc.setFontSize(18);
+      doc.text(k.v, x+kW/2, y+16, { align:"center" });
+      doc.setTextColor(140,146,165); doc.setFont("helvetica","normal"); doc.setFontSize(7);
+      doc.text(k.l, x+kW/2, y+20.5, { align:"center" });
     });
     y += 30;
 
-    // Distribuição por status
-    doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(232, 234, 240);
-    doc.text("Distribuição por Status", 14, y); y += 7;
-    const statusCoresRGB = {
-      "Novo": [158,163,173], "Em Entrevista": [250,166,26],
-      "Aprovado": [159,122,234], "Reprovado": [240,71,71],
-      "Contratado": [88,101,242], "Desistente": [155,132,236]
-    };
-    statusOpts.forEach(s => {
-      const cnt = filtrados.filter(c => c.status === s).length;
-      if (cnt === 0) return;
-      const pct = total > 0 ? (cnt/total)*100 : 0;
-      const barW = ((W - 80) * pct) / 100;
-      const rgb = statusCoresRGB[s] || [150,150,150];
-      doc.setFontSize(8); doc.setTextColor(200, 200, 200);
-      doc.text(s, 14, y + 4);
-      doc.setFillColor(42, 47, 58);
-      doc.rect(60, y, W - 80, 6, "F");
-      doc.setFillColor(...rgb);
-      if (barW > 0) doc.rect(60, y, barW, 6, "F");
-      doc.setTextColor(232, 234, 240);
-      doc.text(`${cnt} (${pct.toFixed(1)}%)`, W - 14, y + 4.5, { align: "right" });
-      y += 9;
-    });
-    y += 6;
-
-    // Tabela candidatos recentes
-    doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(232, 234, 240);
-    doc.text("Candidatos Recentes", 14, y); y += 7;
-    // Header tabela
-    doc.setFillColor(42, 47, 58);
-    doc.rect(14, y, W - 28, 7, "F");
-    doc.setFontSize(7); doc.setTextColor(140, 146, 165);
-    doc.text("NOME", 17, y + 4.5);
-    doc.text("VAGA", 70, y + 4.5);
-    doc.text("ORIGEM", 115, y + 4.5);
-    doc.text("STATUS", 160, y + 4.5);
+    // ── TÍTULO SEÇÃO GRÁFICOS ──
+    doc.setTextColor(232,234,240); doc.setFont("helvetica","bold"); doc.setFontSize(11);
+    doc.text("Distribuição por Status", 14, y);
+    doc.setTextColor(100,100,120); doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.text(`${total} candidatos no período`, W-14, y, { align:"right" });
     y += 8;
-    recentes.forEach((c, i) => {
-      if (i % 2 === 0) { doc.setFillColor(33, 37, 46); doc.rect(14, y-1, W-28, 7, "F"); }
-      doc.setFontSize(8); doc.setTextColor(232, 234, 240); doc.setFont("helvetica", "normal");
-      doc.text((c.nome || "").substring(0, 30), 17, y + 4);
-      doc.text((c.vaga || "-").substring(0, 25), 70, y + 4);
-      doc.text((c.origem_contato || c.origem || "-").substring(0, 20), 115, y + 4);
-      doc.setTextColor(159, 122, 234);
-      doc.text(c.status || "Novo", 160, y + 4);
-      y += 7;
+
+    // ── GRÁFICO PIZZA (desenhado com arcos jsPDF) ──
+    const statusCoresRGB = {
+      "Novo":[158,163,173],"Em Entrevista":[250,166,26],
+      "Aprovado":[159,122,234],"Reprovado":[240,71,71],
+      "Contratado":[88,101,242],"Desistente":[155,132,236]
+    };
+    const dadosPizza = statusOpts.map(s => ({
+      label: s,
+      count: filtrados.filter(c => c.status===s).length,
+      cor: statusCoresRGB[s]||[150,150,150]
+    })).filter(d => d.count > 0);
+
+    if (dadosPizza.length > 0 && total > 0) {
+      const cx = 52, cy = y+34, r = 28, rInner = 14;
+      let angle = -Math.PI/2;
+      dadosPizza.forEach(d => {
+        const slice = (d.count/total)*2*Math.PI;
+        const midA = angle + slice/2;
+        // Draw slice
+        doc.setFillColor(...d.cor);
+        const pts = [[cx, cy]];
+        for (let a=angle; a<=angle+slice; a+=0.05) {
+          pts.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]);
+        }
+        pts.push([cx+r*Math.cos(angle+slice), cy+r*Math.sin(angle+slice)]);
+        doc.triangle(
+          cx, cy,
+          cx+r*Math.cos(angle), cy+r*Math.sin(angle),
+          cx+r*Math.cos(angle+slice/2), cy+r*Math.sin(angle+slice/2),
+          "F"
+        );
+        // Fill arc approximation with small triangles
+        for (let a=angle; a<angle+slice-0.05; a+=0.05) {
+          doc.triangle(cx,cy, cx+r*Math.cos(a),cy+r*Math.sin(a), cx+r*Math.cos(a+0.05),cy+r*Math.sin(a+0.05),"F");
+        }
+        angle += slice;
+      });
+      // Buraco do meio (donut)
+      doc.setFillColor(26,29,35);
+      // draw circle approximation
+      const steps=36;
+      for (let i=0;i<steps;i++){
+        const a1=i*2*Math.PI/steps, a2=(i+1)*2*Math.PI/steps;
+        doc.triangle(cx,cy, cx+rInner*Math.cos(a1),cy+rInner*Math.sin(a1), cx+rInner*Math.cos(a2),cy+rInner*Math.sin(a2),"F");
+      }
+      // Total no centro
+      doc.setTextColor(232,234,240); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text(String(total), cx, cy+3, { align:"center" });
+      doc.setFont("helvetica","normal"); doc.setFontSize(6);
+      doc.text("total", cx, cy+7, { align:"center" });
+
+      // Legenda pizza
+      let ly = y+4;
+      dadosPizza.forEach(d => {
+        const pct = ((d.count/total)*100).toFixed(1);
+        doc.setFillColor(...d.cor);
+        doc.rect(88, ly-3, 5, 4, "F");
+        doc.setTextColor(200,200,200); doc.setFont("helvetica","normal"); doc.setFontSize(8);
+        doc.text(`${d.label}`, 95, ly);
+        doc.setTextColor(232,234,240); doc.setFont("helvetica","bold");
+        doc.text(`${d.count}`, 145, ly, { align:"right" });
+        doc.setTextColor(140,146,165); doc.setFont("helvetica","normal");
+        doc.text(`${pct}%`, 162, ly, { align:"right" });
+        ly += 7;
+      });
+    }
+    y += 76;
+
+    // ── GRÁFICO DE BARRAS VERTICAIS (TORRE) ──
+    doc.setTextColor(232,234,240); doc.setFont("helvetica","bold"); doc.setFontSize(11);
+    doc.text("Volume por Status", 14, y);
+    y += 8;
+
+    const dadosBarra = statusOpts.map(s => ({
+      label: s.replace("Em Entrevista","Entrevista").replace("Desistente","Desist."),
+      count: filtrados.filter(c=>c.status===s).length,
+      cor: statusCoresRGB[s]||[150,150,150]
+    }));
+    const maxBarra = Math.max(...dadosBarra.map(d=>d.count), 1);
+    const barH = 40; // altura máxima das barras
+    const barAreaW = W-28;
+    const bW = Math.min(18, barAreaW/dadosBarra.length - 4);
+    const bGap = (barAreaW - bW*dadosBarra.length) / (dadosBarra.length+1);
+
+    // Eixo X
+    doc.setDrawColor(60,65,80); doc.setLineWidth(0.3);
+    doc.line(14, y+barH, W-14, y+barH);
+
+    dadosBarra.forEach((d,i) => {
+      const bx = 14 + bGap + i*(bW+bGap);
+      const bh = total===0 ? 0 : (d.count/maxBarra)*barH;
+      const by = y+barH-bh;
+      if (bh > 0) {
+        doc.setFillColor(...d.cor);
+        doc.roundedRect(bx, by, bW, bh, 1, 1, "F");
+        // valor em cima
+        doc.setTextColor(232,234,240); doc.setFont("helvetica","bold"); doc.setFontSize(7);
+        doc.text(String(d.count), bx+bW/2, by-2, { align:"center" });
+      }
+      // label embaixo
+      doc.setTextColor(140,146,165); doc.setFont("helvetica","normal"); doc.setFontSize(6);
+      doc.text(d.label, bx+bW/2, y+barH+5, { align:"center" });
     });
+    y += barH+14;
 
-    // Footer
-    doc.setFillColor(31, 35, 46);
-    doc.rect(0, 282, W, 15, "F");
-    doc.setFontSize(8); doc.setTextColor(74, 81, 104);
-    doc.text(`HRSystem · Gerado em ${hoje2} · Confidencial`, W/2, 290, { align: "center" });
+    // ── TABELA CANDIDATOS ──
+    if (y < 220) {
+      doc.setTextColor(232,234,240); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      doc.text("Candidatos no Período", 14, y); y+=7;
+      // Header
+      doc.setFillColor(42,47,58); doc.rect(14, y-1, W-28, 7, "F");
+      doc.setTextColor(159,122,234); doc.setFont("helvetica","bold"); doc.setFontSize(7);
+      doc.text("NOME", 17, y+3.5);
+      doc.text("VAGA", 68, y+3.5);
+      doc.text("ORIGEM", 108, y+3.5);
+      doc.text("RECRUTADOR", 145, y+3.5);
+      doc.text("STATUS", 183, y+3.5);
+      y+=8;
+      const lista = filtrados.slice(0,18);
+      lista.forEach((c,i)=>{
+        if(i%2===0){doc.setFillColor(33,37,46);doc.rect(14,y-1,W-28,6,"F");}
+        doc.setTextColor(220,222,228); doc.setFont("helvetica","normal"); doc.setFontSize(7);
+        doc.text((c.nome||"").substring(0,28), 17, y+3);
+        doc.text((c.vaga||"-").substring(0,20), 68, y+3);
+        doc.text((c.origem_contato||c.origem||"-").substring(0,18), 108, y+3);
+        doc.text((c.recrutador||"-").substring(0,14), 145, y+3);
+        const cor = statusCoresRGB[c.status]||[150,150,150];
+        doc.setTextColor(...cor); doc.setFont("helvetica","bold");
+        doc.text(c.status||"Novo", 183, y+3);
+        y+=6;
+        if(y>270){return;}
+      });
+      if(filtrados.length>18){
+        doc.setTextColor(100,100,120); doc.setFont("helvetica","normal"); doc.setFontSize(7);
+        doc.text(`+ ${filtrados.length-18} candidatos não exibidos`, 14, y+4);
+      }
+    }
 
-    doc.save(`relatorio-dashboard-${hoje2.replace(/\//g,"-")}.pdf`);
+    // ── FOOTER ──
+    doc.setFillColor(26,29,35); doc.rect(0,282,W,15,"F");
+    doc.setFillColor(159,122,234); doc.rect(0,282,4,15,"F");
+    doc.setTextColor(74,81,104); doc.setFont("helvetica","normal"); doc.setFontSize(7);
+    doc.text(`HRSystem · Relatório gerado em ${hoje2} · Confidencial — não compartilhar externamente`, W/2, 291, { align:"center" });
+
+    doc.save(`relatorio-${hoje2.replace(/\//g,"-")}.pdf`);
   };
 
-  const funil = [
+    const funil = [
     { etapa: "Novo", count: filtrados.filter(c => c.status === "Novo").length, color: "#9ea3ad" },
     { etapa: "Entrevista", count: filtrados.filter(c => c.status === "Em Entrevista").length, color: "#faa61a" },
     { etapa: "Aprovado", count: filtrados.filter(c => c.status === "Aprovado").length, color: "#9f7aea" },
@@ -1182,7 +1293,7 @@ function FormCandidato({ candidato, vagas, candidatos, origens, onSalvar, onFech
         </div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">Perfil</label><input className="form-input" value={form.perfil} onChange={e => set("perfil", e.target.value)} placeholder="Júnior, Pleno, Sênior..."/></div>
-          <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status} onChange={e => set("status", e.target.value)}>{STATUS_OPTS.map(s => <option key={s}>{s}</option>)}</select></div>
+          <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status} onChange={e => set("status", e.target.value)}>{(React.useContext(EtapasContext).todosStatus.length > 0 ? React.useContext(EtapasContext).todosStatus : STATUS_OPTS).map(s => <option key={s}>{s}</option>)}</select></div>
         </div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">Recrutador</label><input className="form-input" value={form.recrutador} onChange={e => set("recrutador", e.target.value)} placeholder="Nome do recrutador"/></div>
@@ -1257,11 +1368,41 @@ function CandidatosEmp({ data, setData, user, empresaId, origens, podeVerTudo })
   };
 
   const exportCSV = () => {
-    const cols = ["Nome","Email","Telefone","Vaga","Origem","Perfil","Recrutador","Status","Data Entrevista","Horário","Observações"];
-    const rows = filtrados.map(c => [c.nome||"",c.email||"",c.telefone||"",c.vaga||"",c.origem_contato||c.origem||"",c.perfil||"",c.recrutador||"",c.status||"",c.data_entrevista||"",c.horario_entrevista||"",c.observacoes||""]);
-    const csv = [cols, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+    // Colunas exatamente como aparecem na tabela da tela
+    const cols = [
+      "Nome", "Email", "Telefone", "Origem", "Vaga",
+      "Recrutador", "Status", "Data Entrevista", "Horário Entrevista",
+      "Perfil", "Tipo Entrevista", "Link Meet", "Observações", "Data Cadastro"
+    ];
+    const rows = filtrados.map(c => [
+      c.nome || "",
+      c.email || "",
+      c.telefone || "",
+      c.origem_contato || c.origem || "",
+      c.vaga || "",
+      c.recrutador || "",
+      c.status || "Novo",
+      c.data_entrevista || "",
+      c.horario_entrevista || "",
+      c.perfil || "",
+      c.tipo_entrevista || "",
+      c.link_meet || "",
+      c.observacoes || "",
+      c.data || ""
+    ]);
+    // Adiciona linha de resumo no topo
+    const hoje2 = new Date().toLocaleDateString("pt-BR");
+    const resumo = [`Exportado em: ${hoje2}`, `Total: ${filtrados.length} candidatos`,"","","","","","","","","","","",""];
+    const csv = [resumo, cols, ...rows]
+      .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(","))
+      .join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "candidatos.csv"; a.click(); URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `candidatos_${hoje2.replace(/\//g,"-")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -1277,7 +1418,7 @@ function CandidatosEmp({ data, setData, user, empresaId, origens, podeVerTudo })
         <div className="filter-row">
           <div style={{ position: "relative", flex: 1, minWidth: 150 }}><span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text3)" }}><I d={IC.search} s={13}/></span><input className="filter-input" style={{ paddingLeft: 32 }} placeholder="Nome ou e-mail..." value={busca} onChange={e => setBusca(e.target.value)}/></div>
           <input className="filter-input" placeholder="Telefone..." value={fTel} onChange={e => setFTel(e.target.value)} style={{ maxWidth: 150 }}/>
-          <select className="filter-select" value={fStatus} onChange={e => setFStatus(e.target.value)}><option value="Todos">Todos Status</option>{STATUS_OPTS.map(s => <option key={s}>{s}</option>)}</select>
+          <select className="filter-select" value={fStatus} onChange={e => setFStatus(e.target.value)}><option value="Todos">Todos Status</option>{(React.useContext(EtapasContext).todosStatus.length > 0 ? React.useContext(EtapasContext).todosStatus : STATUS_OPTS).map(s => <option key={s}>{s}</option>)}</select>
           <select className="filter-select" value={fOrigem} onChange={e => setFOrigem(e.target.value)}><option value="Todas">Todas Origens</option>{nomesOrigens.map(o => <option key={o}>{o}</option>)}</select>
           <select className="filter-select" value={fVaga} onChange={e => setFVaga(e.target.value)}><option value="Todas">Todas Vagas</option>{vagasU.map(v => <option key={v}>{v}</option>)}</select>
           {podeVerTudo && <select className="filter-select" value={fRec} onChange={e => setFRec(e.target.value)}><option value="Todos">Todos Recrutadores</option>{recrutadores.map(r => <option key={r}>{r}</option>)}</select>}
@@ -1458,6 +1599,33 @@ function getEmpresaTema(nomeEmpresa) {
   return null;
 }
 
+// ============================================================
+// CONTEXT GLOBAL — etapas do pipeline compartilhadas
+// ============================================================
+const EtapasContext = React.createContext({ etapasCustom: [], todosStatus: [] });
+
+function EtapasProvider({ empresaId, children }) {
+  const { etapasCustom, setEtapasCustom, todosStatus } = React.useContext(EtapasContext);
+
+  React.useEffect(() => {
+    if (!empresaId) return;
+    fetch(`${SB_URL}/rest/v1/pipeline_etapas?select=*&order=created_at.asc`, {
+      headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
+    }).then(r => r.json()).then(d => { if (Array.isArray(d)) setEtapasCustom(d); }).catch(() => {});
+  }, [empresaId]);
+
+  const todosStatus = [
+    ...ETAPAS_FIXAS.map(e => e.nome),
+    ...etapasCustom.map(e => e.nome)
+  ];
+
+  return (
+    <EtapasContext.Provider value={{ etapasCustom, setEtapasCustom, todosStatus }}>
+      {children}
+    </EtapasContext.Provider>
+  );
+}
+
 const ETAPAS_FIXAS = [
   { nome: "Novo",          cor: "#9ea3ad" },
   { nome: "Em Entrevista", cor: "#faa61a" },
@@ -1470,7 +1638,7 @@ const COR_CUSTOM = "#10d9a0";
 
 function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
   // Etapas customizadas salvas no Supabase (tabela pipeline_etapas)
-  const [etapasCustom, setEtapasCustom] = React.useState([]);
+  const { etapasCustom, setEtapasCustom, todosStatus } = React.useContext(EtapasContext);
   const [novaEtapa, setNovaEtapa] = React.useState("");
   const [salvandoEtapa, setSalvandoEtapa] = React.useState(false);
   // Modal migração
@@ -1480,18 +1648,14 @@ function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
   const [salvandoMigrar, setSalvandoMigrar] = React.useState(false);
   const [msgMigrar, setMsgMigrar] = React.useState("");
 
-  React.useEffect(() => {
-    fetch(`${SB_URL}/rest/v1/pipeline_etapas?select=*&order=created_at.asc`, {
-      headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
-    }).then(r => r.json()).then(d => { if (Array.isArray(d)) setEtapasCustom(d); }).catch(() => {});
-  }, []);
+  // etapasCustom e setEtapasCustom vêm do EtapasContext (compartilhado com Dashboard e Candidatos)
 
   // Todas as etapas: fixas + customizadas
   const todasEtapas = [
     ...ETAPAS_FIXAS,
     ...etapasCustom.map(e => ({ nome: e.nome, cor: COR_CUSTOM, id: e.id, custom: true }))
   ];
-  const todosNomes = todasEtapas.map(e => e.nome);
+  const todosNomes = todosStatus.length > 0 ? todosStatus : todasEtapas.map(e => e.nome);
 
   const mover = async (c, novoStatus) => {
     await db.patch("candidatos", c.id, { status: novoStatus });

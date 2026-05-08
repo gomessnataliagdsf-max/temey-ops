@@ -1701,14 +1701,48 @@ function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
   const salvarMigracao = async () => {
     if (!modalMigrar) return;
     setSalvandoMigrar(true);
-    const patch = {};
-    if (migrarEmpresa && migrarEmpresa !== modalMigrar.empresa_id) patch.empresa_id = migrarEmpresa;
-    if (migrarRecrutador !== modalMigrar.recrutador) patch.recrutador = migrarRecrutador;
-    if (Object.keys(patch).length === 0) { setMsgMigrar("Nenhuma alteração feita."); setSalvandoMigrar(false); return; }
-    await db.patch("candidatos", modalMigrar.id, patch);
-    setData(d => ({ ...d, candidatos: d.candidatos.map(c => c.id === modalMigrar.id ? { ...c, ...patch } : c) }));
-    setMsgMigrar("✅ Candidato migrado com sucesso!");
-    setTimeout(() => { setModalMigrar(null); setMsgMigrar(""); }, 1500);
+    setMsgMigrar("");
+
+    const empresaDestino = migrarEmpresa && migrarEmpresa !== modalMigrar.empresa_id ? migrarEmpresa : null;
+    const recrutadorDestino = migrarRecrutador !== modalMigrar.recrutador ? migrarRecrutador : null;
+
+    if (!empresaDestino && !recrutadorDestino) {
+      setMsgMigrar("Nenhuma alteração feita.");
+      setSalvandoMigrar(false);
+      return;
+    }
+
+    try {
+      if (empresaDestino) {
+        // CÓPIA: cria novo candidato na empresa destino com recrutador escolhido
+        const { id: _id, created_at, criado_em, ...camposOriginais } = modalMigrar;
+        const novoCandidato = {
+          ...camposOriginais,
+          empresa_id: empresaDestino,
+          recrutador: recrutadorDestino || modalMigrar.recrutador || "",
+          status: "Novo",   // começa do zero na nova empresa
+          observacoes: `[Indicado de ${modalMigrar.empresa_id ? "outra unidade" : "tráfego"} — fora do perfil]
+${modalMigrar.observacoes || ""}`.trim(),
+        };
+        const r = await db.post("candidatos", novoCandidato);
+        if (Array.isArray(r) && r[0]) {
+          setMsgMigrar("✅ Cópia criada na empresa destino! O candidato original permanece aqui.");
+        } else {
+          setMsgMigrar("❌ Erro ao criar cópia. Tente novamente.");
+          setSalvandoMigrar(false);
+          return;
+        }
+      } else {
+        // Só mudou recrutador — atualiza na mesma empresa
+        await db.patch("candidatos", modalMigrar.id, { recrutador: recrutadorDestino });
+        setData(d => ({ ...d, candidatos: d.candidatos.map(c => c.id === modalMigrar.id ? { ...c, recrutador: recrutadorDestino } : c) }));
+        setMsgMigrar("✅ Recrutador atualizado!");
+      }
+    } catch(e) {
+      setMsgMigrar("❌ Erro na operação. Tente novamente.");
+    }
+
+    setTimeout(() => { setModalMigrar(null); setMsgMigrar(""); }, 2000);
     setSalvandoMigrar(false);
   };
 
@@ -1816,16 +1850,30 @@ function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
         <div className="modal-overlay" onClick={() => setModalMigrar(null)}>
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <span className="modal-title">⇄ Migrar Candidato</span>
+              <span className="modal-title">📋 Copiar para outra Empresa</span>
               <button className="modal-close" onClick={() => setModalMigrar(null)}>×</button>
             </div>
-            <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 14px", marginBottom: 16 }}>
+
+            {/* Info do candidato */}
+            <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 14px", marginBottom: 10 }}>
               <div style={{ fontWeight: 700, fontSize: 13 }}>{modalMigrar.nome}</div>
               <div style={{ fontSize: 11, color: "var(--text2)", marginTop: 2 }}>{modalMigrar.vaga} · Rec: {modalMigrar.recrutador || "—"}</div>
             </div>
 
+            {/* Aviso sobre cópia */}
+            <div style={{ background: "rgba(159,122,234,0.08)", border: "1px solid rgba(159,122,234,0.25)", borderRadius: "var(--radius-sm)", padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>💡</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--green)", marginBottom: 3 }}>O candidato original permanece aqui</div>
+                <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.5 }}>
+                  Uma <strong style={{ color: "var(--text)" }}>cópia</strong> será criada na empresa destino com status <strong style={{ color: "var(--text)" }}>"Novo"</strong>. 
+                  Ideal para candidatos fora do perfil que podem servir para outra unidade.
+                </div>
+              </div>
+            </div>
+
             <div className="form-group">
-              <label className="form-label">Migrar para Empresa</label>
+              <label className="form-label">Copiar para Empresa</label>
               <select
                 className="form-input"
                 value={migrarEmpresa}
@@ -1869,7 +1917,7 @@ function PipelineEmp({ data, setData, empresaId, allUsuarios, allEmpresas }) {
             <div className="modal-actions">
               <button className="btn btn-ghost" onClick={() => setModalMigrar(null)}>Cancelar</button>
               <button className="btn btn-primary" onClick={salvarMigracao} disabled={salvandoMigrar}>
-                {salvandoMigrar ? "Salvando..." : "✓ Confirmar Migração"}
+                {salvandoMigrar ? "Salvando..." : "📋 Criar Cópia na Empresa Destino"}
               </button>
             </div>
           </div>

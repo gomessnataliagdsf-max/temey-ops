@@ -370,8 +370,8 @@ const TIPO_ENT_OPTS = ["Online (Google Meet)","Presencial","Telefone","WhatsApp"
 const HORARIOS = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
 
 const SC_BASE = {"Novo":"#9ea3ad","Em Entrevista":"#faa61a","Aprovado":"#9f7aea","Reprovado":"#f04747","Contratado":"#5865f2","Desistente":"#9b84ec","Aberta":"#9f7aea","Pausada":"#faa61a","Encerrada":"#f04747"};
-window._corPorStatus = {}; // preenchido pelo EtapasProvider
-const SC = s => window._corPorStatus[s] || SC_BASE[s] || "#9ea3ad";
+window._corPorStatus = {};
+const SC = s => (window._corPorStatus && window._corPorStatus[s]) ? window._corPorStatus[s] : (SC_BASE[s] || "#9ea3ad");
 const ini = (n = "") => n.split(" ").slice(0,2).map(x => x[0]).join("").toUpperCase();
 const limTel = t => t ? t.replace(/\D/g,"") : "";
 
@@ -1621,6 +1621,11 @@ function EtapasProvider({ empresaId, children }) {
     }).then(r => r.json()).then(d => { if (Array.isArray(d)) setEtapasCustom(d); }).catch(() => {});
   }, [empresaId]);
 
+  // Sync global para SC() usar cores dinâmicas
+  React.useEffect(() => {
+    window._corPorStatus = corPorStatus;
+  });
+
   const todasEtapasComCor = [
     ...ETAPAS_FIXAS,
     ...etapasCustom.map(e => ({ nome: e.nome, cor: e.cor || COR_CUSTOM }))
@@ -1644,7 +1649,6 @@ function EtapasProvider({ empresaId, children }) {
   todasEtapasComCor.forEach(e => { rgbPorStatus[e.nome] = hexToRgb(e.cor || COR_CUSTOM); });
 
   return (
-    {(window._corPorStatus = corPorStatus, null)}
     <EtapasContext.Provider value={{ etapasCustom, setEtapasCustom, todosStatus, todasEtapasComCor, corPorStatus, rgbPorStatus }}>
       {children}
     </EtapasContext.Provider>
